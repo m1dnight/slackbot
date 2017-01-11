@@ -1,0 +1,13 @@
+[Unit]
+Description=OSlackBot
+
+[Service]
+Type=simple
+User=slackbot
+Group=slackbot
+Restart=on-failure
+Environment=MIX_ENV=prod
+Environment=LANG=en_US.UTF-8
+
+[Install]
+WantedBy=multi-user.target
