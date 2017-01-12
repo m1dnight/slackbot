@@ -7,11 +7,13 @@ defmodule Supervisor.Bot do
 
   def init(conn_pid) do
     children = [
-      worker(Bot.Crash, [conn_pid]),
-      worker(Bot.Karma, [conn_pid]),
-      #worker(Bot.Debug, [conn_pid]),
-      worker(Bot.Markov, [conn_pid]),
-      worker(Bot.Resto, [conn_pid])
+      worker(Bot.Crash,   [conn_pid]),
+      worker(Bot.Karma,   [conn_pid]),
+      #worker(Bot.Debug,  [conn_pid]),
+      worker(Bot.Markov,  [conn_pid]),
+      worker(Bot.Resto,   [conn_pid]),
+      worker(Bot.Cronjob, [conn_pid]),
+      worker(Bot.Rss,     [conn_pid])
       ]
     supervise(children, strategy: :one_for_one)
   end

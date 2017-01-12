@@ -4,7 +4,7 @@ defmodule SlackLogic do
   This module provides functionalityy to the Slack API. It is the first module
   that touches incoming messages from Slack.
   """
-
+  use GenServer
   use Slack
 
   @doc """
@@ -59,7 +59,8 @@ defmodule SlackLogic do
   Info's come from the outside. IT allows us to send messages to the Slack
   process.
   """
-  def handle_info({:send, text, channel}, slack, state) do
+  def handle_info({:send_msg, text, channel}, slack, state) do
+    IO.puts "Sending #{:io_lib.format("~p  on ~p~n", [text, channel])}"
     send_message(text, channel, slack)
     {:ok, state}
   end
@@ -67,4 +68,5 @@ defmodule SlackLogic do
   def handle_info(m, s, state) do
     {:ok, state}
   end
+
 end

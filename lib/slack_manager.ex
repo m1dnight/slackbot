@@ -51,8 +51,8 @@ defmodule SlackManager do
   @doc """
   Sends a message over Slack to the given channel.
   """
-  def handle_cast({:send, msg, channel}, state) do
-    send(state.client, {:send, msg, channel})
+  def handle_cast({:send_msg, msg, channel}, state) do
+    send(state.client, {:send_msg, msg, channel})
     {:noreply, state}
   end
 
@@ -70,6 +70,11 @@ defmodule SlackManager do
     {:reply, {:ok, dealiased}, state}
   end
 
+  def handle_call({:alias_channel, channelname}, _from, state) do
+    hash = alias_channel(channelname, state)
+    {:reply, {:ok, hash}, state}
+  end
+
   ###########
   # Web API #
   ###########
@@ -80,6 +85,18 @@ defmodule SlackManager do
   defp dealias_userhash(input, state) do
     info = Slack.Web.Users.info(input, %{token: state.token})
     Map.get(Map.get(info, "user"), "name")
+  end
+
+  @doc """
+  Fetches the hash from a channel name.
+  """
+  defp alias_channel(channelname, state) do
+    res = Slack.Web.Channels.list(%{token: state.token})
+    res["channels"]
+    |> Enum.map(fn(c) ->
+                  {c["id"], c["name"]}
+                end)
+    |> List.keyfind(channelname, 1, {:nil, channelname})
   end
 
   #############
@@ -102,7 +119,11 @@ defmodule SlackManager do
     GenServer.call(client, {:dealias, m})
   end
 
+  def channel_hash(client, channel) do
+    GenServer.call(client, {:alias_channel, channel})
+  end
+
   def send(client, m, channel) do
-    GenServer.cast(client, {:send, m, channel})
+    GenServer.cast(client, {:send_msg, m, channel})
   end
 end

@@ -12,7 +12,7 @@ defmodule OhaiIrc.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :exirc, :httpoison, :slack],
+    [applications: [:logger, :exirc, :httpoison, :slack, :timex],
      mod: {OhaiIrc, []}]
   end
 
@@ -30,7 +30,8 @@ defmodule OhaiIrc.Mixfile do
      {:exgenius,      "~> 0.0.2"},
      {:slack,         "~> 0.9.2"},
      {:poison,        "~> 3.0"},
-     {:timex,         "~> 3.0"}
+     {:timex,         "~> 3.1.7"},
+     {:feeder_ex,     "~> 1.0"}
    ]
   end
 end
