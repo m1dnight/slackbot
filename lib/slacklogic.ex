@@ -24,8 +24,9 @@ defmodule SlackLogic do
   Note that regular messages are pre-processsed to remove aliases of usernames
   which are in the form of some-sort of hashes.
   """
-  def handle_event(message = %{type: "message"}, slack, state) do
-    {:ok, m} = SlackManager.dealias_message(SlackManager, message.text)
+  def handle_event(message = %{type: "message", text: text}, slack, state) do
+    Debug.print(message.text)
+    {:ok, m} = SlackManager.dealias_message(SlackManager, text)
     message = %{message | text: m}
 
     # If this message has our name in it, we send a second notification.
@@ -68,5 +69,7 @@ defmodule SlackLogic do
   def handle_info(m, s, state) do
     {:ok, state}
   end
+
+
 
 end

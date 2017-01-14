@@ -23,7 +23,12 @@ defmodule Bot.Resto do
   Consulting of karma happens by sending a message "karma subject"
   """
   def handle_info(message = %{type: "message", text: <<"fret"::utf8, _::bitstring>>}, client) do
-    SlackManager.send(client, "#{get_menu()}", message.channel)
+    menu = get_menu()
+    msg = case menu do
+      :nil -> "Geen fret vandaag. Opinio is misschien open."
+      _    -> menu
+    end
+    SlackManager.send(client, "#{msg}", message.channel)
     {:noreply, client}
   end
 

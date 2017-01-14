@@ -22,7 +22,7 @@ defmodule Bot.Karma do
   """
   def handle_info(message = %{type: "message", text: <<"karma "::utf8, rest::bitstring>>}, client) do
     IO.puts "#{message.text}"
-    karma = case String.split(rest) do
+    case String.split(rest) do
       []          -> :nil
       [subject|_] -> SlackManager.send(client, "Points for #{subject}: #{Brain.Karma.get(subject)}", message.channel)
     end
@@ -33,9 +33,9 @@ defmodule Bot.Karma do
   Scans every incoming message for karma increases or decreases. If so, handles
   them.
   """
-  def handle_info(message = %{type: "message"}, state) do
+  def handle_info(message = %{type: "message", text: text}, state) do
     ~r/(@(\S+[^:\s])\s|(\S+[^+:\s])|\(([^\(\)]+\W[^\(\)]+)\))(\+\+|--)(\s|$)/u
-    |> Regex.scan(message.text)
+    |> Regex.scan(text)
     |> process_karma_list(message.channel, state)
     {:noreply, state}
   end

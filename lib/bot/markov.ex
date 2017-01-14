@@ -28,15 +28,15 @@ defmodule Bot.Markov do
   @doc """
   If we receive a regular message we process it for later sentence generation.
   """
-  def handle_info(message = %{type: "message"}, client) do
-    Brain.Markov.parse(message.text)
+  def handle_info(message = %{type: "message", text: text}, client) do
+    Brain.Markov.parse(text)
     {:noreply, client}
   end
 
   @doc """
   If we receive a message that mentions us we say something stupid.
   """
-  def handle_info(message = %{type: "mention"}, client) do
+  def handle_info(message = %{type: "mention", text: _text}, client) do
     starting_phrase = ["I think", "I am", "I know", "I read", "you don't", "you should" ] |> Enum.shuffle |> hd
     SlackManager.send client, Brain.Markov.generate_phrase(starting_phrase, 15 + :random.uniform(10)), message.channel
     {:noreply, client}
