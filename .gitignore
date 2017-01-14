@@ -12,3 +12,4 @@ erl_crash.dump
 *.conf
 
 # End of https://www.gitignore.io/api/elixir
+data/rss/backup.dat

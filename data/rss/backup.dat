@@ -1,6 +1,0 @@
-{<<"http://xkcd.com/rss.xml">>,
- #{'__struct__' => 'Elixir.Date',
-   calendar => 'Elixir.Calendar.ISO',
-   day => 14,
-   month => 1,
-   year => 2017}}.
