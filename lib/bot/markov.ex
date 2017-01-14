@@ -7,7 +7,7 @@ defmodule Bot.Markov do
   end
 
   def init([client]) do
-    :random.seed(:os.timestamp)
+    :rand.seed(:exs1024)
     SlackManager.add_handler client, self
     {:ok, client}
   end
@@ -20,7 +20,7 @@ defmodule Bot.Markov do
   If a message starts with Markov we have to generate a sentence.
   """
   def handle_info(message = %{type: "message", text: <<"markov "::utf8, start_word::bitstring>>}, client) do
-    phrase = Brain.Markov.generate_phrase(start_word, 12 + :random.uniform(10))
+    phrase = Brain.Markov.generate_phrase(start_word, 12 + :rand.uniform(10))
     SlackManager.send client, phrase, message.channel
     {:noreply, client}
   end
@@ -28,7 +28,7 @@ defmodule Bot.Markov do
   @doc """
   If we receive a regular message we process it for later sentence generation.
   """
-  def handle_info(message = %{type: "message", text: text}, client) do
+  def handle_info(_message = %{type: "message", text: text}, client) do
     Brain.Markov.parse(text)
     {:noreply, client}
   end
@@ -38,7 +38,7 @@ defmodule Bot.Markov do
   """
   def handle_info(message = %{type: "mention", text: _text}, client) do
     starting_phrase = ["I think", "I am", "I know", "I read", "you don't", "you should" ] |> Enum.shuffle |> hd
-    SlackManager.send client, Brain.Markov.generate_phrase(starting_phrase, 15 + :random.uniform(10)), message.channel
+    SlackManager.send client, Brain.Markov.generate_phrase(starting_phrase, 15 + :rand.uniform(10)), message.channel
     {:noreply, client}
   end
 
