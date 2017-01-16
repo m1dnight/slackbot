@@ -7,11 +7,13 @@ defmodule SlackLogic do
   use GenServer
   use Slack
 
+  require Logger
+
   @doc """
   This function is called whenever a connection to Slack is made.
   """
   def handle_connect(slack, state) do
-    IO.puts "Connected as #{slack.me.name}"
+    Logger.debug "Connected as #{slack.me.name}"
     SlackManager.notify(:connected)
     {:ok, state}
   end
@@ -25,7 +27,7 @@ defmodule SlackLogic do
   which are in the form of some-sort of hashes.
   """
   def handle_event(message = %{type: "message", text: text}, slack, state) do
-    Debug.print(message.text)
+    Logger.debug ">> #{text}"
     {:ok, m} = SlackManager.dealias_message(SlackManager, text)
     message = %{message | text: m}
 
@@ -61,7 +63,7 @@ defmodule SlackLogic do
   process.
   """
   def handle_info({:send_msg, text, channel}, slack, state) do
-    IO.puts "Sending #{:io_lib.format("~p  on ~p~n", [text, channel])}"
+    Logger.debug "<< #{channel}: #{text}"
     send_message(text, channel, slack)
     {:ok, state}
   end

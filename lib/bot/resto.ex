@@ -1,6 +1,6 @@
 defmodule Bot.Resto do
   use GenServer
-
+  require Logger
   @url 'https://call-cc.be/files/vub-resto/etterbeek.nl.json'
 
   @moduledoc """

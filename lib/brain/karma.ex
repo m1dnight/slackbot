@@ -50,7 +50,6 @@ defmodule Brain.Karma do
     new_karma = current_karma + amount
     new_state = List.keystore(state, subject, 0, {subject, new_karma})
     content = new_state
-    |> IO.inspect
     |> Enum.map(&[:io_lib.print(&1) | ".\n"])
     |> IO.iodata_to_binary
     File.write(data_backup_file, content)
@@ -59,7 +58,7 @@ defmodule Brain.Karma do
   ###########
   # Private #
   ###########
-  
+
   defp data_backup_file do
     "data/karma/backup.dat"
   end

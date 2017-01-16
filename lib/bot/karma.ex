@@ -1,5 +1,6 @@
 defmodule Bot.Karma do
   use GenServer
+  require Logger
   @moduledoc """
   This handler manages so-called "karma". A person is given Karma by sending
   a message "person++". This will count as 1 point.
@@ -21,7 +22,6 @@ defmodule Bot.Karma do
   Consulting of karma happens by sending a message "karma subject"
   """
   def handle_info(message = %{type: "message", text: <<"karma "::utf8, rest::bitstring>>}, client) do
-    IO.puts "#{message.text}"
     case String.split(rest) do
       []          -> :nil
       [subject|_] -> SlackManager.send(client, "Points for #{subject}: #{Brain.Karma.get(subject)}", message.channel)
@@ -51,13 +51,11 @@ defmodule Bot.Karma do
   # Private #
   ###########
 
-  defp process_karma_list([], _channel, _client) do
-  end
-
   @doc """
   Processes the list of Regex matches from above. Each entry is inserted into
   the big bot's brain.
   """
+  defp process_karma_list([], _channel, _client), do: :nil
   defp process_karma_list([[_expression, _match, name, word, phrase, operator, _] | rest], channel, client) do
     subject = [name, word, phrase]
     |> Enum.filter(fn(x) -> String.length(x) > 1 end)

@@ -1,5 +1,6 @@
 defmodule Bot.Debug do
   use GenServer
+  require Logger
   @moduledoc """
   This module will print out all the events that are received from Slack.
   """
@@ -8,7 +9,7 @@ defmodule Bot.Debug do
   end
 
   def init([client]) do
-    SlackManager.add_handler client, self
+    Bot.Cronjob.schedule({:repeat, IO, :puts, ["cron"], 2000})
     {:ok, client}
   end
 
@@ -20,7 +21,7 @@ defmodule Bot.Debug do
   A catch-all for unimportant messages.
   """
   def handle_info(i, state) do
-    debug("#{:io_lib.format("~p~n", [i])}")
+    Logger.debug("#{:io_lib.format("~p~n", [i])}")
     {:noreply, state}
   end
 

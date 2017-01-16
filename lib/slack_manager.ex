@@ -4,6 +4,7 @@ defmodule SlackManager do
   subscribe to events from Slack. This module manages these subscribers.
   """
   use GenServer
+  require Logger
 
   @doc """
   The state of the SlackManager process.

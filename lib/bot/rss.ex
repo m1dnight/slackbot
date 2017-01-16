@@ -1,10 +1,13 @@
 defmodule Bot.Rss do
   use GenServer
+  require Logger
   @channel "random"
   @moduledoc """
   This plugin follows RSS feeds and notifies the Slack channel in case of an
   update.
   """
+  @interval 5 * 60 * 1000 # 5 minutes.
+
   def start_link(client) do
     GenServer.start_link(__MODULE__, [client])
   end
@@ -16,7 +19,7 @@ defmodule Bot.Rss do
     # Read in the feeds we need to read and schedule the updates.
     feeds = get_feeds()
     Enum.map(feeds, fn(feed) ->
-                  send(Bot.Cronjob, {:repeat, Kernel, :send, [self(), {:check, feed}], 100000})
+                  Bot.Cronjob.schedule({:repeat, Kernel, :send, [self, {:check, feed}], @interval})
                 end)
 
     {:ok, {client, id}}
@@ -30,13 +33,14 @@ defmodule Bot.Rss do
   Check the given RSS feed.
   """
   def handle_info({:check, feed}, {client, channelid}) do
+    Logger.debug "RSS checking feed: #{feed}"
     unseen = get_unseen(feed)
     Enum.map(unseen,
              fn(e) ->
                SlackManager.send(client, e, channelid)
                Process.sleep(1000)
              end)
-    {:noreply, client}
+    {:noreply, {client, channelid}}
   end
 
   @doc """
@@ -49,6 +53,7 @@ defmodule Bot.Rss do
   ###########
   # Private #
   ###########
+
   @doc """
   Returns the newest unseen entries for this RSS feed.
   """
@@ -99,7 +104,6 @@ defmodule Bot.Rss do
     lasts = read_data()
     new_lasts = List.keystore(lasts, feed, 0, {feed, time})
     content = new_lasts
-    |> IO.inspect
     |> Enum.map(&[:io_lib.print(&1) | ".\n"])
     |> IO.iodata_to_binary
     File.write(data_file, content)

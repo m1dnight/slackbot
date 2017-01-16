@@ -1,5 +1,7 @@
 defmodule Bot.Cronjob do
   use GenServer
+  require Logger
+
   @moduledoc """
   The Cronjob plugin allows other processes to schedule a task to happen
   periodically. It does not immediately interact with the user.
@@ -9,7 +11,6 @@ defmodule Bot.Cronjob do
   end
 
   def init([client]) do
-    #SlackManager.add_handler client, self
     {:ok, client}
   end
 
@@ -18,29 +19,17 @@ defmodule Bot.Cronjob do
   ########
 
   @doc """
-  Any process can send a message to register a function to be called after a
-  certain period.
-  """
-  def handle_info({:schedule_once, module, function, args, delay}, state) do
-    schedule({:once, module, function, args, delay})
-    {:noreply, state}
-  end
-
-  def handle_info({:schedule, module, function, args, interval}, state) do
-    schedule({:repeat, module, function, args, interval})
-    {:noreply, state}
-  end
-
-  @doc """
-  Each task execution happens when we receive a message that we sent to
-  ourselves by means of schedule/1 and schedule_once/1.
+  These messages arrive by using the schedule/1 function.
+  {:repeat,..} is a message to repeat a command indefinitely.
   """
   def handle_info({:repeat, module, function, args, interval}, state) do
     apply(module, function, args)
     schedule({:repeat, module, function, args, interval})
     {:noreply, state}
   end
-
+  @doc """
+  Executes the function just like repeat, but only does so once.
+  """
   def handle_info({:once, module, function, args, interval}, state) do
     apply(module, function, args)
     {:noreply, state}
@@ -57,7 +46,16 @@ defmodule Bot.Cronjob do
   # Private #
   ###########
 
+  @doc """
+  To schedule a task to be run you call schedule/1.
+  A message is sent after delay to the cronjob process, which will in turn
+  execute the function provided in the message.
+
+  repetition:
+    :repeat -> Repeats forever.
+    :once   -> Executed once.
+  """
   def schedule({repetition, module, function, args, delay}) do
-    Process.send_after(self(), {repetition, module, function, args, delay}, delay)
+    Process.send_after(Bot.Cronjob, {repetition, module, function, args, delay}, delay)
   end
 end
