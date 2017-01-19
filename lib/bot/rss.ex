@@ -19,8 +19,8 @@ defmodule Bot.Rss do
     # Read in the feeds we need to read and schedule the updates.
     feeds = get_feeds()
     Enum.map(feeds, fn(feed) ->
-                  Bot.Cronjob.schedule({:repeat, Kernel, :send, [self, {:check, feed}], @interval})
-                end)
+      Bot.Cronjob.schedule({:repeat, Kernel, :send, [self, {:check, feed}], @interval})
+    end)
 
     {:ok, {client, id}}
   end
@@ -36,10 +36,10 @@ defmodule Bot.Rss do
     Logger.debug "RSS checking feed: #{feed}"
     unseen = get_unseen(feed)
     Enum.map(unseen,
-             fn(e) ->
-               SlackManager.send(client, e, channelid)
-               Process.sleep(1000)
-             end)
+    fn(e) ->
+      SlackManager.send(client, e, channelid)
+      Process.sleep(1000) # Dont spam too fast.
+    end)
     {:noreply, {client, channelid}}
   end
 
@@ -60,12 +60,13 @@ defmodule Bot.Rss do
   def get_unseen(url) do
     # Get the last seen time.
     {^url, last} = get_last(url)
-    # Update the last seen time.
-    Timex.now |> Timex.to_date |> store_last(url)
-    url
+    to_show = url
     |> get_entries
     |> filter_new(last)
     |> Enum.map(&pretty_print/1)
+    # Update the last seen time.
+    Timex.now |> Timex.to_date |> store_last(url)
+    to_show
   end
 
   @doc """
@@ -84,67 +85,67 @@ defmodule Bot.Rss do
   defp filter_new(entries, last_known) do
     entries
     |> Enum.filter(fn(e) ->
-                     (e.updated
-                     |> Timex.parse!("{RFC1123}")
-                     |> Timex.to_date)
-                     > last_known end)
-  end
+      (e.updated
+      |> Timex.parse!("{RFC1123}")
+      |> Timex.to_date)
+      > last_known end)
+    end
 
-  @doc """
-  Turns an RSS entry into a pretty-printed string.
-  """
-  defp pretty_print(entry) do
-    "*#{entry.title}* - #{entry.link}"
-  end
+    @doc """
+    Turns an RSS entry into a pretty-printed string.
+    """
+    defp pretty_print(entry) do
+      "*#{entry.title}* - #{entry.link}"
+    end
 
-  @doc """
-  Updates the last known entry for a given RSS feed on disk.
-  """
-  defp store_last(time, feed) do
-    lasts = read_data()
-    new_lasts = List.keystore(lasts, feed, 0, {feed, time})
-    content = new_lasts
-    |> Enum.map(&[:io_lib.print(&1) | ".\n"])
-    |> IO.iodata_to_binary
-    File.write(data_file, content)
-  end
+    @doc """
+    Updates the last known entry for a given RSS feed on disk.
+    """
+    defp store_last(time, feed) do
+      lasts = read_data()
+      new_lasts = List.keystore(lasts, feed, 0, {feed, time})
+      content = new_lasts
+      |> Enum.map(&[:io_lib.print(&1) | ".\n"])
+      |> IO.iodata_to_binary
+      File.write(data_file, content)
+    end
 
-  @doc """
-  Gets the last known RSS entry for this file from disk.
-  """
-  defp get_last(feed) do
-    lasts = read_data()
-    List.keyfind(lasts, feed, 0, {feed, Timex.zero})
-  end
+    @doc """
+    Gets the last known RSS entry for this file from disk.
+    """
+    defp get_last(feed) do
+      lasts = read_data()
+      List.keyfind(lasts, feed, 0, {feed, Timex.zero})
+    end
 
-  @doc """
-  Reads the data from the RSS reader. If none exists, the empty list is
-  returned.
-  """
-  defp read_data() do
-    case :file.consult(data_file) do
-      {:ok, content} -> content
-      _              -> []
+    @doc """
+    Reads the data from the RSS reader. If none exists, the empty list is
+    returned.
+    """
+    defp read_data() do
+      case :file.consult(data_file) do
+        {:ok, content} -> content
+        _              -> []
+      end
+    end
+
+    @doc """
+    Returns a list of feeds the user is subscribed to.
+    """
+    defp get_feeds() do
+      case :file.consult(feed_list) do
+        {:ok, content} -> content
+        _              -> []
+      end
+    end
+    @doc """
+    The location of the data file on disk.
+    """
+    defp data_file do
+      "data/rss/backup.dat"
+    end
+
+    defp feed_list do
+      "data/rss/feeds.dat"
     end
   end
-
-  @doc """
-  Returns a list of feeds the user is subscribed to.
-  """
-  defp get_feeds() do
-    case :file.consult(feed_list) do
-      {:ok, content} -> content
-      _              -> []
-    end
-  end
-  @doc """
-  The location of the data file on disk.
-  """
-  defp data_file do
-    "data/rss/backup.dat"
-  end
-
-  defp feed_list do
-    "data/rss/feeds.dat"
-  end
-end

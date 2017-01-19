@@ -54,6 +54,13 @@ defmodule Bot.Cronjob do
   repetition:
     :repeat -> Repeats forever.
     :once   -> Executed once.
+
+  To schedule a job as a client, one might call:
+
+  Bot.Cronjob.schedule({:repeat, IO, :puts, ["hello"], 1000})
+
+  After 1 second the cronjob will print out "hello", and do so again after a
+  second.
   """
   def schedule({repetition, module, function, args, delay}) do
     Process.send_after(Bot.Cronjob, {repetition, module, function, args, delay}, delay)
