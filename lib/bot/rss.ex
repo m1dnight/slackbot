@@ -17,9 +17,9 @@ defmodule Bot.Rss do
     {:ok, {id, _channel}} = SlackManager.channel_hash(client, @channel)
 
     # Read in the feeds we need to read and schedule the updates.
-    feeds = get_feeds()
+    feeds = get_subscribed_feeds()
     Enum.map(feeds, fn(feed) ->
-      Bot.Cronjob.schedule({:repeat, Kernel, :send, [self, {:check, feed}], @interval})
+      Bot.Cronjob.schedule({:repeat, Kernel, :send, [self(), {:check, feed}], @interval})
     end)
 
     {:ok, {client, id}}
@@ -34,7 +34,7 @@ defmodule Bot.Rss do
   """
   def handle_info({:check, feed}, {client, channelid}) do
     Logger.debug "RSS checking feed: #{feed}"
-    {^feed, last_seen} = get_last(feed)
+    {^feed, last_seen} = get_bookmark(feed)
     unseen = get_unseen_since(feed, last_seen)
     Enum.map(unseen,
     fn(e) ->
@@ -62,9 +62,10 @@ defmodule Bot.Rss do
     to_show = url
     |> get_entries
     |> filter_new(last)
-    |> Enum.map(&pretty_print/1)
+    |> Enum.reverse # This way, if we print more than 1, the newest entry is printed last.
+    |> Enum.map(&pretty_print_entry/1)
     # Update the last seen time.
-    Timex.now |> Timex.to_date |> store_last(url)
+    Timex.now |> Timex.to_date |> store_bookmark(url)
     to_show
   end
 
@@ -72,9 +73,16 @@ defmodule Bot.Rss do
   Given an RSS feed url, returns all the listed entries.
   """
   defp get_entries(url) do
-    {:ok, %HTTPoison.Response{body: body}} = HTTPoison.get(url)
-    {:ok, feed, _} = FeederEx.parse(body)
-    feed.entries
+    with {:ok, response} <- HTTPoison.get(url),
+         {:ok, feed, _}  <- FeederEx.parse(response.body)
+    do
+      feed.entries
+    else
+      {:error, e} -> Logger.error e
+                     [] # No entries in case of error
+      _           -> Logger.error "Unknown error parsing feed #{url}"
+                     []
+    end
   end
 
   @doc """
@@ -93,27 +101,26 @@ defmodule Bot.Rss do
     @doc """
     Turns an RSS entry into a pretty-printed string.
     """
-    defp pretty_print(entry) do
+    defp pretty_print_entry(entry) do
       "*#{entry.title}* - #{entry.link}"
     end
 
     @doc """
     Updates the last known entry for a given RSS feed on disk.
     """
-    defp store_last(time, feed) do
-      lasts = read_data()
-      new_lasts = List.keystore(lasts, feed, 0, {feed, time})
-      content = new_lasts
+    defp store_bookmark(time, feed) do
+      bookmarks = List.keystore(get_bookmarks(), feed, 0, {feed, time})
+      content = bookmarks
       |> Enum.map(&[:io_lib.print(&1) | ".\n"])
       |> IO.iodata_to_binary
-      File.write(data_file, content)
+      File.write(data_file(), content)
     end
 
     @doc """
     Gets the last known RSS entry for this file from disk.
     """
-    defp get_last(feed) do
-      lasts = read_data()
+    defp get_bookmark(feed) do
+      lasts = get_bookmarks()
       List.keyfind(lasts, feed, 0, {feed, Timex.zero})
     end
 
@@ -121,8 +128,8 @@ defmodule Bot.Rss do
     Reads the data from the RSS reader. If none exists, the empty list is
     returned.
     """
-    defp read_data() do
-      case :file.consult(data_file) do
+    defp get_bookmarks() do
+      case :file.consult(data_file()) do
         {:ok, content} -> content
         _              -> []
       end
@@ -131,8 +138,8 @@ defmodule Bot.Rss do
     @doc """
     Returns a list of feeds the user is subscribed to.
     """
-    defp get_feeds() do
-      case :file.consult(feed_list) do
+    defp get_subscribed_feeds() do
+      case :file.consult(feed_list()) do
         {:ok, content} -> content
         _              -> []
       end
