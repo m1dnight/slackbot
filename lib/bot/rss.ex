@@ -34,7 +34,8 @@ defmodule Bot.Rss do
   """
   def handle_info({:check, feed}, {client, channelid}) do
     Logger.debug "RSS checking feed: #{feed}"
-    unseen = get_unseen(feed)
+    {^feed, last_seen} = get_last(feed)
+    unseen = get_unseen_since(feed, last_seen)
     Enum.map(unseen,
     fn(e) ->
       SlackManager.send(client, e, channelid)
@@ -57,9 +58,7 @@ defmodule Bot.Rss do
   @doc """
   Returns the newest unseen entries for this RSS feed.
   """
-  def get_unseen(url) do
-    # Get the last seen time.
-    {^url, last} = get_last(url)
+  def get_unseen_since(url, last) do
     to_show = url
     |> get_entries
     |> filter_new(last)
