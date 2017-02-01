@@ -2,7 +2,7 @@ defmodule Bot.Resto do
   use Plugin
   @url 'https://call-cc.be/files/vub-resto/etterbeek.nl.json'
 
-  on_message "fret" do
+  on_messages ["fret", "Fret"] do
     menu = get_menu()
     msg = case menu do
       :nil -> "Geen fret vandaag. Opinio is misschien open."

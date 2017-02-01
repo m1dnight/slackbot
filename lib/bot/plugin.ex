@@ -1,6 +1,5 @@
 defmodule Plugin do
 
-
   defmacro __using__(_options) do
     quote do
       import unquote(__MODULE__)
@@ -25,6 +24,15 @@ defmodule Plugin do
         {:noreply, client}
       end
     end
+  end
+
+  defmacro on_messages(patterns, body) do
+    Enum.map(patterns,
+    fn(p) ->
+      quote do
+        on_message(unquote(p), unquote(body))
+       end
+     end)
   end
 
   defmacro reply(text) do
