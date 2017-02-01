@@ -1,35 +1,14 @@
 defmodule Bot.Resto do
-  use GenServer
-  require Logger
+  use Plugin
   @url 'https://call-cc.be/files/vub-resto/etterbeek.nl.json'
 
-  @moduledoc """
-  This module displays the VUB restaurant menu, if there is any.
-  """
-  def start_link(client) do
-    GenServer.start_link(__MODULE__, [client])
-  end
-
-  def init([client]) do
-    SlackManager.add_handler client, self
-    {:ok, client}
-  end
-
-  ########
-  # Info #
-  ########
-
-  @doc """
-  Consulting of karma happens by sending a message "karma subject"
-  """
-  def handle_info(message = %{type: "message", text: <<"fret"::utf8, _::bitstring>>}, client) do
+  on_message "fret" do
     menu = get_menu()
     msg = case menu do
       :nil -> "Geen fret vandaag. Opinio is misschien open."
       _    -> menu
     end
-    SlackManager.send(client, "#{msg}", message.channel)
-    {:noreply, client}
+    reply("#{msg}")
   end
 
   @doc """

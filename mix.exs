@@ -4,7 +4,7 @@ defmodule OhaiIrc.Mixfile do
   def project do
     [app: :ohai_irc,
      version: "0.0.1",
-     elixir: "~> 1.4",
+     elixir: "~> 1.3",
      deps: deps]
   end
 
