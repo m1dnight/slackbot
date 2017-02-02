@@ -17,7 +17,7 @@ defmodule Plugin do
       # Each plugin has to implement the GenServer behaviour, so we inject these
       # here.
       def init([client]) do
-        SlackManager.add_handler client, self
+        SlackManager.add_handler client, self()
         {:ok, client}
       end
 
@@ -30,7 +30,7 @@ defmodule Plugin do
         case res do
           {:ok, reply}     -> SlackManager.send(client, "#{reply}", message.channel)
           {:error, reason} -> IO.puts "Error in plugin #{reason}"
-          {:ok}            -> :noop
+          {:noreply}       -> :noop
         end
         {:noreply, client}
       end

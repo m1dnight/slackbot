@@ -6,7 +6,7 @@ defmodule Supervisor.Connection do
   end
 
   def init(_state) do
-    slack_token = read_slack_config
+    slack_token = read_slack_config()
     children =
       [
         # The actual Slack connection.

@@ -52,7 +52,7 @@ defmodule SlackLogic do
   @doc """
   The close function is called whenever Slack disconnects.
   """
-  def handle_close(reason, slack, state) do
+  def handle_close(_reason, _slack, state) do
     SlackManager.notify(:disconnected)
     {:ok, state}
   end
@@ -68,7 +68,7 @@ defmodule SlackLogic do
     {:ok, state}
   end
 
-  def handle_info(m, s, state) do
+  def handle_info(_,_, state) do
     {:ok, state}
   end
 

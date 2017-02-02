@@ -5,7 +5,7 @@ defmodule OhaiIrc.Mixfile do
     [app: :ohai_irc,
      version: "0.0.1",
      elixir: "~> 1.4",
-     deps: deps]
+     deps: deps()]
   end
 
   # Configuration for the OTP application
