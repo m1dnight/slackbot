@@ -12,7 +12,7 @@ defmodule OhaiIrc.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :exirc, :httpoison, :slack, :timex],
+    [applications: [:logger, :httpoison, :slack, :timex],
      mod: {OhaiIrc, []}]
   end
 

@@ -1,42 +1,23 @@
 defmodule Bot.Resto do
-  use GenServer
+  use Plugin
   require Logger
   @url 'https://call-cc.be/files/vub-resto/etterbeek.nl.json'
 
-  @moduledoc """
-  This module displays the VUB restaurant menu, if there is any.
-  """
-  def start_link(client) do
-    GenServer.start_link(__MODULE__, [client])
-  end
-
-  def init([client]) do
-    SlackManager.add_handler client, self()
-    {:ok, client}
-  end
-
-  ########
-  # Info #
-  ########
 
   @doc """
   Consulting of karma happens by sending a message "karma subject"
   """
-  def handle_info(message = %{type: "message", text: <<"fret"::utf8, _::bitstring>>}, client) do
+  def on_message(<<"fret"::utf8, _::bitstring>>) do
     menu = get_menu()
     msg = case menu do
       :nil -> "Geen fret vandaag. Opinio is misschien open."
       _    -> menu
     end
-    SlackManager.send(client, "#{msg}", message.channel)
-    {:noreply, client}
+    {:ok, "#{msg}"}
   end
 
-  @doc """
-  A catch-all for infos.
-  """
-  def handle_info(_m, state) do
-    {:noreply, state}
+  def on_message(_) do
+    {:noreply}
   end
 
   ###########
@@ -69,7 +50,7 @@ defmodule Bot.Resto do
 
   # Given a single map that contains all the menus for that day, returns a string
   # for that day that's printable. E.g.:
-  # 
+  #
   # %{"date" => "2017-01-11",
   # "menus" => [%{"color" => "#fdb85b", "dish" => "Kervelsoep", "name" => "Soep"},
   # %{"color" => "#68b6f3", "dish" => "Cordon Bleu met erwtjes en worteltjes",
@@ -85,9 +66,9 @@ defmodule Bot.Resto do
   # "name" => "Pasta bar"},
   # %{"color" => "#6c4c42", "dish" => "Wintergroentewok met volle rijst",
   # "name" => "Wok"}]}
-  # 
+  #
   # becomes
-  # 
+  #
   # "Soep: Kervelsoep - Menu 1: Cordon Bleu met erwtjes en worteltjes -
   # Menu 2: Ovenschotel met kippengehakt, appelmoes en aardappelblokjes -
   # Vis: Tongrolletjes met spinazie en Nantua saus - Veggie: Groentekrustie met
