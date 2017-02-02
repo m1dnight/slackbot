@@ -1,5 +1,4 @@
 defmodule Plugin do
-  @behaviour :gen_server
 
   # Each Plugin should implement an on_message function.
   @callback on_message(message :: term) :: {:ok, response :: term} | {:error, reason :: term}
@@ -14,8 +13,6 @@ defmodule Plugin do
       use GenServer
 
       # Insert the GenServer interface methods.
-      # Each plugin has to implement the GenServer behaviour, so we inject these
-      # here.
       def init([client]) do
         SlackManager.add_handler client, self()
         {:ok, client}
@@ -37,6 +34,15 @@ defmodule Plugin do
 
       def handle_info(_,client) do
         {:noreply, client}
+      end
+
+      def handle_cast(msg, state) do
+        # We do this to trick dialyzer to not complain about non-local returns.
+        reason = {:bad_cast, msg}
+        case :erlang.phash2(1, 1) do
+          0 -> exit(reason)
+          1 -> {:stop, reason, state}
+        end
       end
       # End of GenServer interface methods.
     end

@@ -25,12 +25,4 @@ defmodule Bot.Debug do
     {:noreply, state}
   end
 
-  ###########
-  # Private #
-  ###########
-
-  defp debug(msg) do
-    IO.puts IO.ANSI.yellow() <> msg <> IO.ANSI.reset()
-  end
-
 end

@@ -26,8 +26,7 @@ defmodule OhaiIrc.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [{:exirc, github: "bitwalker/exirc"},
-     {:exgenius,      "~> 0.0.2"},
+    [{:exgenius,      "~> 0.0.2"},
      {:slack,         "~> 0.9.2"},
      {:poison,        "~> 3.0"},
      {:timex,         "~> 3.1.7"},

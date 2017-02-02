@@ -30,7 +30,7 @@ defmodule Bot.Cronjob do
   @doc """
   Executes the function just like repeat, but only does so once.
   """
-  def handle_info({:once, module, function, args, interval}, state) do
+  def handle_info({:once, module, function, args, _interval}, state) do
     apply(module, function, args)
     {:noreply, state}
   end

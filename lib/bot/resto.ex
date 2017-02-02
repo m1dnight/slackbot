@@ -11,7 +11,7 @@ defmodule Bot.Resto do
   end
 
   def init([client]) do
-    SlackManager.add_handler client, self
+    SlackManager.add_handler client, self()
     {:ok, client}
   end
 
@@ -53,52 +53,46 @@ defmodule Bot.Resto do
     |> parse_menu()
   end
 
-  @doc """
-  Grabs the JSON data from the web, and parses it into a map.
-  """
+  # Grabs the JSON data from the web, and parses it into a map.
   defp get_data() do
     {:ok, {{_, 200, 'OK'}, _, body}} = :httpc.request(:get, {@url, []}, [], [body_format: :binary])
     {:ok, menus} = Poison.decode(body)
     menus
   end
 
-  @doc """
-  Given a parsed JSON map, returns the menu of today, if there is one. If not,
-  returns nil.
-  """
+  # Given a parsed JSON map, returns the menu of today, if there is one. If not,
+  # returns nil.
   defp extract_today(data) do
     data
     |> Enum.find(fn(x) -> x["date"] == "#{Timex.today}" end)
   end
 
-  @doc """
-  Given a single map that contains all the menus for that day, returns a string
-  for that day that's printable. E.g.:
-
-  %{"date" => "2017-01-11",
-  "menus" => [%{"color" => "#fdb85b", "dish" => "Kervelsoep", "name" => "Soep"},
-  %{"color" => "#68b6f3", "dish" => "Cordon Bleu met erwtjes en worteltjes",
-  "name" => "Menu 1"},
-  %{"color" => "#cc93d5",
-  "dish" => "Ovenschotel met kippengehakt, appelmoes en aardappelblokjes",
-  "name" => "Menu 2"},
-  %{"color" => "#f0eb93",
-  "dish" => "Tongrolletjes met spinazie en Nantua saus", "name" => "Vis"},
-  %{"color" => "#87b164", "dish" => "Groentekrustie met bloemkool in kaassaus",
-  "name" => "Veggie"},
-  %{"color" => "#de694a", "dish" => "Lasagne Bolognaise",
-  "name" => "Pasta bar"},
-  %{"color" => "#6c4c42", "dish" => "Wintergroentewok met volle rijst",
-  "name" => "Wok"}]}
-
-  becomes
-
-  "Soep: Kervelsoep - Menu 1: Cordon Bleu met erwtjes en worteltjes -
-  Menu 2: Ovenschotel met kippengehakt, appelmoes en aardappelblokjes -
-  Vis: Tongrolletjes met spinazie en Nantua saus - Veggie: Groentekrustie met
-  bloemkool in kaassaus - Pasta bar: Lasagne Bolognaise - Wok: Wintergroentewok
-  met volle rijst"
-  """
+  # Given a single map that contains all the menus for that day, returns a string
+  # for that day that's printable. E.g.:
+  # 
+  # %{"date" => "2017-01-11",
+  # "menus" => [%{"color" => "#fdb85b", "dish" => "Kervelsoep", "name" => "Soep"},
+  # %{"color" => "#68b6f3", "dish" => "Cordon Bleu met erwtjes en worteltjes",
+  # "name" => "Menu 1"},
+  # %{"color" => "#cc93d5",
+  # "dish" => "Ovenschotel met kippengehakt, appelmoes en aardappelblokjes",
+  # "name" => "Menu 2"},
+  # %{"color" => "#f0eb93",
+  # "dish" => "Tongrolletjes met spinazie en Nantua saus", "name" => "Vis"},
+  # %{"color" => "#87b164", "dish" => "Groentekrustie met bloemkool in kaassaus",
+  # "name" => "Veggie"},
+  # %{"color" => "#de694a", "dish" => "Lasagne Bolognaise",
+  # "name" => "Pasta bar"},
+  # %{"color" => "#6c4c42", "dish" => "Wintergroentewok met volle rijst",
+  # "name" => "Wok"}]}
+  # 
+  # becomes
+  # 
+  # "Soep: Kervelsoep - Menu 1: Cordon Bleu met erwtjes en worteltjes -
+  # Menu 2: Ovenschotel met kippengehakt, appelmoes en aardappelblokjes -
+  # Vis: Tongrolletjes met spinazie en Nantua saus - Veggie: Groentekrustie met
+  # bloemkool in kaassaus - Pasta bar: Lasagne Bolognaise - Wok: Wintergroentewok
+  # met volle rijst"
   defp parse_menu(:nil) do
     :nil
   end

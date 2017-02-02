@@ -10,7 +10,7 @@ defmodule Bot.Karma do
   end
 
   def init([client]) do
-    SlackManager.add_handler client, self
+    SlackManager.add_handler client, self()
     {:ok, client}
   end
 
@@ -51,10 +51,8 @@ defmodule Bot.Karma do
   # Private #
   ###########
 
-  @doc """
-  Processes the list of Regex matches from above. Each entry is inserted into
-  the big bot's brain.
-  """
+  # Processes the list of Regex matches from above. Each entry is inserted into
+  # the big bot's brain.
   defp process_karma_list([], _channel, _client), do: :nil
   defp process_karma_list([[_expression, _match, name, word, phrase, operator, _] | rest], channel, client) do
     subject = [name, word, phrase]

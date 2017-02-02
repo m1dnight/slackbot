@@ -8,7 +8,7 @@ defmodule Brain.Karma do
 
   def init([[]]) do
     Logger.debug "No initial karma state provided, attempting to read from disk"
-    case :file.consult(data_backup_file) do
+    case :file.consult(data_backup_file()) do
       {:ok, state} -> {:ok, state}
       _ ->
       Logger.warn "No initial karma and can't read backup, starting with empty Karma Brain"
@@ -52,7 +52,7 @@ defmodule Brain.Karma do
     content = new_state
     |> Enum.map(&[:io_lib.print(&1) | ".\n"])
     |> IO.iodata_to_binary
-    File.write(data_backup_file, content)
+    File.write(data_backup_file(), content)
     {:reply, new_karma, new_state}
   end
   ###########

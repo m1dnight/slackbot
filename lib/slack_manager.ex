@@ -80,17 +80,14 @@ defmodule SlackManager do
   # Web API #
   ###########
 
-  @doc """
-  Dealiases a single hash. Expects a hash in the form of "ABCDEF".
-  """
+  # Dealiases a single hash. Expects a hash in the form of "ABCDEF".
   defp dealias_userhash(input, state) do
     info = Slack.Web.Users.info(input, %{token: state.token})
     Map.get(Map.get(info, "user"), "name")
   end
 
-  @doc """
-  Fetches the hash from a channel name.
-  """
+
+  # Fetches the hash from a channel name.
   defp alias_channel(channelname, state) do
     res = Slack.Web.Channels.list(%{token: state.token})
     res["channels"]
