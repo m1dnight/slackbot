@@ -10,7 +10,6 @@ defmodule Supervisor.Bot do
       worker(Bot.Crash,   [conn_pid]),
       worker(Bot.Karma,   [conn_pid]),
       #worker(Bot.Debug,   [conn_pid]),
-      worker(Bot.Markov,  [conn_pid]),
       worker(Bot.Resto,   [conn_pid]),
       worker(Bot.Cronjob, [conn_pid]),
       worker(Bot.Rss,     [conn_pid])
