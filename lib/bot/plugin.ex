@@ -29,8 +29,13 @@ defmodule Plugin do
         res = on_message(text)
         case res do
           {:ok, reply}     -> SlackManager.send(client, "#{reply}", message.channel)
-          {:error, reason} -> IO.puts "An error occured.."
+          {:error, reason} -> IO.puts "Error in plugin #{reason}"
+          {:ok}            -> :noop
         end
+        {:noreply, client}
+      end
+
+      def handle_info(_,client) do
         {:noreply, client}
       end
       # End of GenServer interface methods.
