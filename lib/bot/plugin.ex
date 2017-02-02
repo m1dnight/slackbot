@@ -3,6 +3,7 @@ defmodule Plugin do
   # Each Plugin should implement an on_message function.
   @callback on_message(message :: term) :: {:ok, response :: term} | {:error, reason :: term}
 
+  @callback startup(opts :: term) :: {:ok} | {:error, reason :: term}
   def start_link(client) do
     GenServer.start_link(__MODULE__, [client])
   end
@@ -32,19 +33,19 @@ defmodule Plugin do
         {:noreply, client}
       end
 
-      def handle_info(_,client) do
+      def handle_info(m,client) do
         {:noreply, client}
       end
-
-      def handle_cast(msg, state) do
-        # We do this to trick dialyzer to not complain about non-local returns.
-        reason = {:bad_cast, msg}
-        case :erlang.phash2(1, 1) do
-          0 -> exit(reason)
-          1 -> {:stop, reason, state}
-        end
-      end
+      defoverridable handle_info: 2
       # End of GenServer interface methods.
+
+      # Standard behavior of plugins.
+      def startup(opts) do
+        IO.puts "Default startup behaviour"
+        {:noreply}
+      end
+      defoverridable startup: 1
+
     end
   end
 end
