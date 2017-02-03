@@ -1,7 +1,7 @@
 defmodule Bot.Rss do
   use GenServer
   require Logger
-  @channel "test"
+  @channel "random"
   @moduledoc """
   This plugin follows RSS feeds and notifies the Slack channel in case of an
   update.
@@ -70,6 +70,7 @@ defmodule Bot.Rss do
 
   # Returns the newest unseen entries for this RSS feed.
   defp get_unseen_since({url, last}) do
+    IO.puts "Last seen #{last}"
     with {:ok, entries} <- get_entries(url)
     do
       to_show = entries
@@ -104,7 +105,9 @@ defmodule Bot.Rss do
   defp filter_new(entries, last_known) do
     entries
     |> Enum.filter(fn(e) ->
-                     (e.updated |> Timex.parse!("{RFC1123}") |> Timex.to_date) > last_known
+                     entry_date = e.updated |> Timex.parse!("{RFC1123}") |> Timex.to_date
+                     IO.puts "#{Timex.before?(last_known, entry_date)}"
+                     Timex.before?(last_known, entry_date)
                    end)
   end
 
@@ -114,6 +117,7 @@ defmodule Bot.Rss do
 
   # Updates the last known entry for a given RSS feed on disk.
   defp store_bookmark(time, feed) do
+    IO.puts "Marking #{feed} as seen until #{time}"
     bookmarks = List.keystore(get_bookmarks(), feed, 0, {feed, time})
     content = bookmarks
     |> Enum.map(&[:io_lib.print(&1) | ".\n"])
@@ -125,6 +129,7 @@ defmodule Bot.Rss do
   # Gets the last known RSS entry for this file from disk.
   defp get_bookmark(feed) do
     lasts = get_bookmarks()
+    IO.inspect lasts
     List.keyfind(lasts, feed, 0, {feed, Timex.zero})
   end
 

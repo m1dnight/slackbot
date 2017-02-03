@@ -16,6 +16,7 @@ defmodule Plugin do
       # Insert the GenServer interface methods.
       def init([client]) do
         SlackManager.add_handler client, self()
+        startup([client])
         {:ok, client}
       end
 
