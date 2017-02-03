@@ -76,6 +76,11 @@ defmodule SlackManager do
     {:reply, {:ok, hash}, state}
   end
 
+  def handle_call({:dealias_channel, channelhash}, _from, state) do
+    name = dealias_channel(channelhash, state)
+    {:reply, {:ok, name}, state}
+  end
+
   ###########
   # Web API #
   ###########
@@ -95,6 +100,13 @@ defmodule SlackManager do
                   {c["id"], c["name"]}
                 end)
     |> List.keyfind(channelname, 1, {:nil, channelname})
+  end
+
+  defp dealias_channel(channelhash, state) do
+    res = Slack.Web.Channels.list(%{token: state.token})
+    res["channels"]
+    |> Enum.map(fn(c) -> {c["id"], c["name"]} end)
+    |> List.keyfind(channelhash, 0, {channelhash, :nil})
   end
 
   #############
@@ -119,6 +131,10 @@ defmodule SlackManager do
 
   def channel_hash(channel) do
     GenServer.call(SlackManager, {:alias_channel, channel})
+  end
+
+  def channel_dehash(hash) do
+    GenServer.call(SlackManager, {:dealias_channel, hash})
   end
 
   def send_message(m, channel) do

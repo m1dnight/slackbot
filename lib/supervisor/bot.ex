@@ -10,9 +10,9 @@ defmodule Supervisor.Bot do
       worker(Bot.Crash,   [opts]),
       worker(Bot.Karma,   [opts]),
       #worker(Bot.Debug,  []),
-      worker(Bot.Resto,   [opts])
-      #worker(Bot.Cronjob, []),
-      #worker(Bot.Rss,     [])
+      worker(Bot.Resto,   [opts]),
+      worker(Bot.Cronjob, [opts]),
+      worker(Bot.Rss,     [opts])
       ]
     supervise(children, strategy: :one_for_one)
   end

@@ -3,6 +3,9 @@ defmodule Plugin do
   # Each Plugin should implement an on_message function.
   @callback on_message(message :: term, channel :: term) :: any
 
+  # Optional callback to execute when the plugin starts. 
+  @callback initialize() :: any
+
   defmacro __using__(_) do
     quote location: :keep do
       @behaviour Plugin
@@ -12,6 +15,7 @@ defmodule Plugin do
       # Insert the GenServer interface methods.
       def init(args) do
         SlackManager.add_handler self()
+        initialize()
         {:ok, args}
       end
 
@@ -37,7 +41,8 @@ defmodule Plugin do
       end
       # End of GenServer interface methods.
       #-------------------------------------------------------------------------
-
+      def initialize(), do: :ok
+      defoverridable initialize: 0
     end
   end
 end

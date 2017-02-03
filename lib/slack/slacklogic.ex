@@ -29,7 +29,8 @@ defmodule SlackLogic do
   def handle_event(message = %{type: "message", text: text}, slack, state) do
     Logger.debug ">> #{text}"
     {:ok, m} = SlackManager.dealias_message(text)
-    message = %{message | text: m}
+    {:ok, {_, channel}} = SlackManager.channel_dehash(message.channel)
+    message = %{message | text: m, channel: channel}
 
     # If this message has our name in it, we send a second notification.
     if String.contains?(message.text, slack.me.name) do
@@ -64,7 +65,8 @@ defmodule SlackLogic do
   """
   def handle_info({:send_msg, text, channel}, slack, state) do
     Logger.debug "<< #{channel}: #{text}"
-    send_message(text, channel, slack)
+    {:ok, {channel_id, _}} = SlackManager.channel_hash(channel)
+    send_message(text, channel_id, slack)
     {:ok, state}
   end
 
