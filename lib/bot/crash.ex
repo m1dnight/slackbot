@@ -6,7 +6,7 @@ defmodule Bot.Crash do
     {:noreply}
   end
 
-  def on_message(_, _) do
+  def on_message(_m, _channel) do
     {:noreply}
   end
 end

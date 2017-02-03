@@ -16,7 +16,6 @@ defmodule Supervisor.Connection do
         # The bot plugins.
         worker(Supervisor.Bot, [[]])
       ]
-
       supervise(children, strategy: :one_for_all)
     end
 

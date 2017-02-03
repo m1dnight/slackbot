@@ -1,7 +1,7 @@
 defmodule Plugin do
 
   # Each Plugin should implement an on_message function.
-  @callback on_message(message :: term, channel :: term) :: {:ok, response :: term} | {:error, reason :: term}
+  @callback on_message(message :: term, channel :: term) :: any
 
   defmacro __using__(_) do
     quote location: :keep do
@@ -37,6 +37,7 @@ defmodule Plugin do
       end
       # End of GenServer interface methods.
       #-------------------------------------------------------------------------
+
     end
   end
 end

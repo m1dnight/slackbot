@@ -3,10 +3,6 @@ defmodule Bot.Resto do
   require Logger
   @url 'https://call-cc.be/files/vub-resto/etterbeek.nl.json'
 
-
-  @doc """
-  Consulting of karma happens by sending a message "karma subject"
-  """
   def on_message(<<"fret"::utf8, _::bitstring>>, _channel) do
     menu = get_menu()
     msg = case menu do
@@ -16,7 +12,7 @@ defmodule Bot.Resto do
     {:ok, "#{msg}"}
   end
 
-  def on_message(_,_) do
+  def on_message(_m, _channel) do
     {:noreply}
   end
 

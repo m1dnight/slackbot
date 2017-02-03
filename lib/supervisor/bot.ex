@@ -8,9 +8,9 @@ defmodule Supervisor.Bot do
   def init(opts) do
     children = [
       worker(Bot.Crash,   [opts]),
-      worker(Bot.Karma,   [opts])
+      worker(Bot.Karma,   [opts]),
       #worker(Bot.Debug,  []),
-      #worker(Bot.Resto,   []),
+      worker(Bot.Resto,   [opts])
       #worker(Bot.Cronjob, []),
       #worker(Bot.Rss,     [])
       ]
