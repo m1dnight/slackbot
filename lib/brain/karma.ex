@@ -46,6 +46,7 @@ defmodule Brain.Karma do
   end
 
   def handle_call({:change, subject, amount}, _from, state) do
+    IO.puts "Changing karma"
     {^subject, current_karma} = List.keyfind(state, subject, 0, {subject, 0})
     new_karma = current_karma + amount
     new_state = List.keystore(state, subject, 0, {subject, new_karma})

@@ -14,7 +14,7 @@ defmodule Supervisor.Connection do
         # The interface process to the Slack connection.
         worker(SlackManager, [SlackConnection, slack_token]),
         # The bot plugins.
-        worker(Supervisor.Bot, [SlackManager])
+        worker(Supervisor.Bot, [[]])
       ]
 
       supervise(children, strategy: :one_for_all)

@@ -28,7 +28,7 @@ defmodule SlackLogic do
   """
   def handle_event(message = %{type: "message", text: text}, slack, state) do
     Logger.debug ">> #{text}"
-    {:ok, m} = SlackManager.dealias_message(SlackManager, text)
+    {:ok, m} = SlackManager.dealias_message(text)
     message = %{message | text: m}
 
     # If this message has our name in it, we send a second notification.

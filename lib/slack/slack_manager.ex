@@ -101,27 +101,27 @@ defmodule SlackManager do
   # Interface #
   #############
 
-  def add_handler(client, pid) do
-    GenServer.cast(client, {:add_handler, pid})
+  def add_handler(pid) do
+    GenServer.cast(SlackManager, {:add_handler, pid})
   end
 
-  def remove_handler(client, pid) do
-    GenServer.cast(client, {:remove_handler, pid})
+  def remove_handler(pid) do
+    GenServer.cast(SlackManager, {:remove_handler, pid})
   end
 
   def notify(m) do
     GenServer.cast(SlackManager, {:notify, m})
   end
 
-  def dealias_message(client, m) do
-    GenServer.call(client, {:dealias, m})
+  def dealias_message(m) do
+    GenServer.call(SlackManager, {:dealias, m})
   end
 
-  def channel_hash(client, channel) do
-    GenServer.call(client, {:alias_channel, channel})
+  def channel_hash(channel) do
+    GenServer.call(SlackManager, {:alias_channel, channel})
   end
 
-  def send(client, m, channel) do
-    GenServer.cast(client, {:send_msg, m, channel})
+  def send_message(m, channel) do
+    GenServer.cast(SlackManager, {:send_msg, m, channel})
   end
 end

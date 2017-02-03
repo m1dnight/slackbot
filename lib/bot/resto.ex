@@ -7,7 +7,7 @@ defmodule Bot.Resto do
   @doc """
   Consulting of karma happens by sending a message "karma subject"
   """
-  def on_message(<<"fret"::utf8, _::bitstring>>) do
+  def on_message(<<"fret"::utf8, _::bitstring>>, _channel) do
     menu = get_menu()
     msg = case menu do
       :nil -> "Geen fret vandaag. Opinio is misschien open."
@@ -16,7 +16,7 @@ defmodule Bot.Resto do
     {:ok, "#{msg}"}
   end
 
-  def on_message(_) do
+  def on_message(_,_) do
     {:noreply}
   end
 
