@@ -3,6 +3,7 @@ defmodule Bot.Rss do
   require Logger
   @channel "random"
   @interval 2 * 60 * 60 * 1000 # 2 hours
+  @useragent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
 
   def initialize() do
     # Read in the feeds we need to read and schedule the updates.
@@ -54,7 +55,7 @@ defmodule Bot.Rss do
 
   # Given an RSS feed url, returns all the listed entries.
   defp get_entries(url) do
-    with {:ok, response} <- HTTPoison.get(url),
+    with {:ok, response} <- HTTPoison.get(url, [{"User-agent", @useragent}]),
          {:ok, feed, _}  <- FeederEx.parse(response.body) # In case of an error this seems to kill the entire process, fix this.
     do
       {:ok, feed.entries}
