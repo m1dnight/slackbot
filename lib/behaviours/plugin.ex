@@ -13,7 +13,7 @@ defmodule Plugin do
 
       #-------------------------------------------------------------------------
       # Insert the GenServer interface methods.
-      
+
       def init(args) do
         SlackManager.add_handler self()
         initialize()
@@ -21,7 +21,7 @@ defmodule Plugin do
       end
 
       def start_link(args) do
-        GenServer.start_link(__MODULE__, [args])
+        GenServer.start_link(__MODULE__, [args], [{:name, __MODULE__}])
       end
 
       def handle_info(message = %{type: "message", text: text}, state) do
