@@ -25,7 +25,7 @@ defmodule Supervisor.Connection do
         {:ok, [token]} = :file.consult(filename)
         token
       else
-        nil
+        exit(:no_slack_config_found)
       end
     end
   end
