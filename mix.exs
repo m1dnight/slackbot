@@ -30,7 +30,8 @@ defmodule OhaiIrc.Mixfile do
      {:slack,         "~> 0.9.2"},
      {:poison,        "~> 3.0"},
      {:timex,         "~> 3.1.7"},
-     {:feeder_ex,     "~> 1.0"}
+     {:feeder_ex,     "~> 1.0"},
+     {:html_entities, "~> 0.3"}
    ]
   end
 end

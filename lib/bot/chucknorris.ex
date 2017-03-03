@@ -26,9 +26,10 @@ defmodule Bot.ChuckNorris do
   def joke() do
     # Get the data from the webservcer.
     with {:ok, data} <- get_data(),
-         {:ok, joke} <- extract_text(data)
+         {:ok, joke} <- extract_text(data),
+         decoded     <- HtmlEntities.decode(joke)
     do
-      {:ok, joke}
+      {:ok, decoded}
     else
       err -> {:error, err}
     end
