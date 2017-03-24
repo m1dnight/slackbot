@@ -44,7 +44,11 @@ defmodule Bot.Rss do
       |> Enum.reverse # Print newest last.
       |> Enum.map(&pretty_print_entry/1)
 
-      Timex.now |> Timex.to_date |> store_bookmark(url)
+      unless Enum.count(to_show)  <= 0 do
+        Logger.debug "Storing bookmark for feed #{url}"
+        Timex.now |> Timex.to_date |> store_bookmark(url)
+      end
+      
 
       Logger.debug "Found #{Enum.count(to_show)} new entries for #{url}"
       to_show
