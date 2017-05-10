@@ -24,7 +24,8 @@ defmodule Plugin do
         GenServer.start_link(__MODULE__, [args], [{:name, __MODULE__}])
       end
 
-      def handle_info(message = %{type: "message", text: text}, state) do
+      def handle_info(message = %{type: "message", text: text, user: user}, state) do
+        IO.inspect message
         reply = on_message(text, message.channel)
         case reply do
           {:ok, reply}     ->

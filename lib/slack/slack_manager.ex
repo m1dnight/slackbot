@@ -71,6 +71,12 @@ defmodule SlackManager do
     {:reply, {:ok, dealiased}, state}
   end
 
+  def handle_call({:dealias_user, m}, _from, state = %{aliases: aliasmap}) do
+    {:ok, dealiased} = dealias_userhash(m, state)
+    new_state = %{state | aliases: Map.put(aliasmap, m, dealiased)}
+    {:reply, {:ok, dealiased}, new_state}
+  end
+
   def handle_call({:hash_channel, channelname}, _from, state = %{aliases: aliasmap}) do
     {hash, channelname} = hash_channel(channelname, state)
     # Store this alias in memory.
@@ -89,10 +95,20 @@ defmodule SlackManager do
   ###########
 
   # Dealiases a single hash. Expects a hash in the form of "ABCDEF".
-  defp dealias_userhash(input, state) do
-    info = Slack.Web.Users.info(input, %{token: state.token})
-    Map.get(Map.get(info, "user"), "name")
+  defp dealias_userhash(user_hash, state = %{aliases: aliasmap}) do
+    case aliasmap[user_hash] do
+      :nil     -> dealias_userhash_slack(user_hash, state)
+      username -> {:ok, username}
+    end
   end
+
+  defp dealias_userhash_slack(user_hash, state) do
+    Logger.debug "Dehashing #{user_hash} through the API."
+    info = Slack.Web.Users.info(user_hash, %{token: state.token})
+    username = Map.get(Map.get(info, "user"), "name")
+    {:ok, username}
+  end
+
 
   # Aliases a channelanme. E.g. alias_channel("random") => "ABCDEF"
   defp hash_channel(channelname, state = %{aliases: aliasmap}) do
@@ -101,16 +117,7 @@ defmodule SlackManager do
       hash -> {hash, channelname}
     end
   end
-  # Fetches the hash from a channel name via the Slack API.
-  defp hash_channel_slack(channelname, state) do
-    Logger.debug "Hashing #{channelname} through the API."
-    res = Slack.Web.Channels.list(%{token: state.token})
-    res["channels"]
-    |> Enum.map(fn(c) ->
-                  {c["id"], c["name"]}
-                end)
-    |> List.keyfind(channelname, 1, {:nil, channelname})
-  end
+
 
   # Turns a channel hashname into the channel name.
   defp dehash_channel(hash, state = %{aliases: aliasmap}) do
@@ -120,6 +127,17 @@ defmodule SlackManager do
       :nil -> dehash_channel_slack(hash, state)
       hash -> {hash, name}
     end
+  end
+
+  # Fetches the hash from a channel name via the Slack API.
+  defp hash_channel_slack(channelname, state) do
+    Logger.debug "Hashing #{channelname} through the API."
+    res = Slack.Web.Channels.list(%{token: state.token})
+    res["channels"]
+    |> Enum.map(fn(c) ->
+                  {c["id"], c["name"]}
+                end)
+    |> List.keyfind(channelname, 1, {:nil, channelname})
   end
 
   # Turns a channel hashname into the channel name via the Slack API.
@@ -149,6 +167,10 @@ defmodule SlackManager do
 
   def dealias_message(m) do
     GenServer.call(SlackManager, {:dealias, m})
+  end
+
+  def dealias_userhash(m) do
+    GenServer.call(SlackManager, {:dealias_user, m})
   end
 
   def hash_channel(channel) do
