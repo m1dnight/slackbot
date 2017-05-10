@@ -1,7 +1,7 @@
 defmodule Bot.Rss do
   use Plugin
   require Logger
-  @channel "random"
+  @channel Application.fetch_env!(:slack, :rss_channel)
   @interval 2 * 60 * 60 * 1000 # 2 hours
   @useragent "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36 Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"
 
