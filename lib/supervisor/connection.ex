@@ -6,7 +6,8 @@ defmodule Supervisor.Connection do
   end
 
   def init(_state) do
-    slack_token = read_slack_config()
+    slack_token = Application.fetch_env!(:slack, :token)
+
     children =
       [
         # The actual Slack connection.
@@ -17,15 +18,5 @@ defmodule Supervisor.Connection do
         worker(Supervisor.Bot, [[]])
       ]
       supervise(children, strategy: :one_for_all)
-    end
-
-    # Reads the configuration from a config file.
-    defp read_slack_config(filename \\ "ohaibot_slack.conf") do
-      if File.exists?(filename) do
-        {:ok, [token]} = :file.consult(filename)
-        token
-      else
-        exit(:no_slack_config_found)
-      end
     end
   end

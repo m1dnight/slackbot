@@ -1,7 +1,0 @@
-{host,<<"irc.example.com">>}.
-{port,6667}.
-{pass,<<>>}.
-{nick,<<"ohaibot">>}.
-{user,<<"ohaibot">>}.
-{name,<<"ohaibot">>}.
-{client,nil}.

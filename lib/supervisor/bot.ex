@@ -12,7 +12,8 @@ defmodule Supervisor.Bot do
       worker(Bot.ChuckNorris, [opts]),
       worker(Bot.Resto,       [opts]),
       worker(Bot.Cronjob,     [opts]),
-      worker(Bot.Rss,         [opts])
+      worker(Bot.Rss,         [opts]),
+      worker(Bot.Owner,       [opts])
       ]
     supervise(children, strategy: :one_for_one)
   end
