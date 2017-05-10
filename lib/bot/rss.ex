@@ -13,7 +13,7 @@ defmodule Bot.Rss do
                 end)
   end
 
-  def on_message(_,_) do
+  def on_message(_,_,_) do
     {:noreply}
   end
 
@@ -48,7 +48,7 @@ defmodule Bot.Rss do
         Logger.debug "Storing bookmark for feed #{url}"
         Timex.now |> Timex.to_date |> store_bookmark(url)
       end
-      
+
 
       Logger.debug "Found #{Enum.count(to_show)} new entries for #{url}"
       to_show

@@ -1,14 +1,14 @@
 defmodule Bot.Karma do
   use Plugin
 
-  def on_message(<<"karma "::utf8, rest::bitstring>>, _channel) do
+  def on_message(<<"karma "::utf8, rest::bitstring>>, _channel, _from) do
     case String.split(rest) do
       []          -> {:noreply}
       [subject|_] -> {:ok,"Points for #{subject}: #{Brain.Karma.get(subject)}"}
     end
   end
 
-  def on_message(text, channel) do
+  def on_message(text, channel, _from) do
     ~r/(@(\S+[^:\s])\s|(\S+[^+:\s])|\(([^\(\)]+\W[^\(\)]+)\))(\+\+|--)(\s|$)/u
     |> Regex.scan(text)
     |> process_karma_list(channel)

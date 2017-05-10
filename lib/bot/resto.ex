@@ -3,7 +3,7 @@ defmodule Bot.Resto do
   require Logger
   @url 'https://call-cc.be/files/vub-resto/etterbeek.nl.json'
 
-  def on_message(<<"fret"::utf8, _::bitstring>>, _channel) do
+  def on_message(<<"fret"::utf8, _::bitstring>>, _channel, _from) do
     menu = get_menu()
     msg = case menu do
       :nil -> "Geen fret vandaag. Opinio is misschien open."
@@ -12,7 +12,7 @@ defmodule Bot.Resto do
     {:ok, "#{msg}"}
   end
 
-  def on_message(_m, _channel) do
+  def on_message(_m, _channel, _from) do
     {:noreply}
   end
 

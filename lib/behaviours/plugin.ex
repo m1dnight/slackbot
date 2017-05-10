@@ -1,7 +1,7 @@
 defmodule Plugin do
 
   # Each Plugin should implement an on_message function.
-  @callback on_message(message :: term, channel :: term) :: any
+  @callback on_message(message :: term, channel :: term, from :: term) :: any
 
   # Optional callback to execute when the plugin starts.
   @callback initialize() :: any
@@ -24,9 +24,9 @@ defmodule Plugin do
         GenServer.start_link(__MODULE__, [args], [{:name, __MODULE__}])
       end
 
-      def handle_info(message = %{type: "message", text: text, user: user}, state) do
+      def handle_info(message = %{type: "message", text: text, user: from}, state) do
         IO.inspect message
-        reply = on_message(text, message.channel)
+        reply = on_message(text, message.channel, from)
         case reply do
           {:ok, reply}     ->
             SlackManager.send_message("#{reply}", message.channel)

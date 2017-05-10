@@ -1,14 +1,14 @@
 defmodule Bot.Benvolios do
   use Plugin
 
-  def on_message(<<"order "::utf8, rest::bitstring>>, _channel, _sender) do
+  def on_message(<<"order "::utf8, rest::bitstring>>, _channel, sender) do
     case String.split(rest) do
       []          -> {:ok, }
-      [subject|_] -> {:ok,"Points for #{subject}: #{Brain.Karma.get(subject)}"}
+      [subject|_] -> {:ok,"#{sender} has ordered #{rest}"}
     end
   end
 
-  def on_message(text, channel) do
+  def on_message(text, channel, sender) do
     {:noreply}
   end
   ###########

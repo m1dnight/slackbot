@@ -26,11 +26,12 @@ defmodule SlackLogic do
   Note that regular messages are pre-processsed to remove aliases of usernames
   which are in the form of some-sort of hashes.
   """
-  def handle_event(message = %{type: "message", text: text}, slack, state) do
+  def handle_event(message = %{type: "message", text: text, user: from}, slack, state) do
     Logger.debug ">> #{text}"
+    {:ok, sender} = SlackManager.dealias_userhash(from)
     {:ok, m} = SlackManager.dealias_message(text)
     {:ok, {_, channel}} = SlackManager.dehash_channel(message.channel)
-    message = %{message | text: m, channel: channel}
+    message = %{message | text: m, channel: channel, user: sender}
 
     # If this message has our name in it, we send a second notification.
     if String.contains?(message.text, slack.me.name) do

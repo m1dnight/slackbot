@@ -3,7 +3,7 @@ defmodule Bot.ChuckNorris do
   require Logger
   @url 'http://api.icndb.com/jokes/random'
 
-  def on_message(<<"joke?"::utf8, _::bitstring>>, _channel) do
+  def on_message(<<"joke?"::utf8, _::bitstring>>, _channel, _from) do
     j = joke()
     case j do
       {:error, e} -> IO.puts "Error getting joke #{e}"
@@ -12,7 +12,7 @@ defmodule Bot.ChuckNorris do
     end
   end
 
-  def on_message(_m, _channel) do
+  def on_message(_m, _channel, _from) do
     {:noreply}
   end
 
