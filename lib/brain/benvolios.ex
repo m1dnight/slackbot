@@ -72,7 +72,7 @@ defmodule Brain.Benvolios do
     {:reply, :ok, new_state}
   end
 
-  def handle_call(:clear, _from, state) do
+  def handle_call(:clear, _from, _state) do
     Logger.debug "Clearing orders"
     new_state = %{}
     save_orders(new_state)
