@@ -29,7 +29,7 @@ defmodule Brain.Benvolios do
   end
 
   def forget_order(orderer) do
-    GenServer.call __MODULE__, {:cancel, orderer}
+    GenServer.call __MODULE__, {:forget_order, orderer}
   end
 
   def get_order(orderer) do

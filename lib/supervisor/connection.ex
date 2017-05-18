@@ -11,9 +11,9 @@ defmodule Supervisor.Connection do
     children =
       [
         # The actual Slack connection.
-        worker(Slack.Bot, [SlackLogic, [], slack_token, %{:name => SlackConnection}]),
+        worker(Slack.Bot, [SlackLogic, [], slack_token, %{:name => Slack.Bot}]),
         # The interface process to the Slack connection.
-        worker(SlackManager, [SlackConnection, slack_token]),
+        worker(SlackManager, [Slack.Bot, slack_token]),
         # The bot plugins.
         worker(Supervisor.Bot, [[]])
       ]

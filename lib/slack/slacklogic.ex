@@ -4,7 +4,6 @@ defmodule SlackLogic do
   This module provides functionalityy to the Slack API. It is the first module
   that touches incoming messages from Slack.
   """
-  use GenServer
   use Slack
 
   require Logger
@@ -30,8 +29,9 @@ defmodule SlackLogic do
     Logger.debug ">> #{text}"
     {:ok, sender} = SlackManager.dealias_userhash(from)
     {:ok, m} = SlackManager.dealias_message(text)
-    {:ok, {_, channel}} = SlackManager.dehash_channel(message.channel)
-    message = %{message | text: m, channel: channel, user: sender}
+    IO.puts "Channel of incoming message: #{message.channel}"
+    {:ok, {_, chan}} = SlackManager.dehash_channel(message.channel)
+    message = %{message | text: m, channel: chan, user: sender}
 
     # If this message has our name in it, we send a second notification.
     if String.contains?(message.text, slack.me.name) do
@@ -65,7 +65,7 @@ defmodule SlackLogic do
   process.
   """
   def handle_info({:send_msg, text, channel}, slack, state) do
-    Logger.debug "<< #{channel}: #{text}"
+  Logger.debug "<< #{channel}: #{text}"
     {:ok, {channel_id, _}} = SlackManager.hash_channel(channel)
     send_message(text, channel_id, slack)
     {:ok, state}
@@ -74,7 +74,4 @@ defmodule SlackLogic do
   def handle_info(_,_, state) do
     {:ok, state}
   end
-
-
-
 end
