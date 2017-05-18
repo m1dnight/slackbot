@@ -25,7 +25,6 @@ defmodule Plugin do
       end
 
       def handle_info(message = %{type: "message", text: text, user: from}, state) do
-        IO.inspect message
         reply = on_message(text, message.channel, from)
         case reply do
           {:ok, reply}     ->

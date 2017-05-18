@@ -10,7 +10,7 @@ defmodule SlackManager do
   The state of the SlackManager process.
   """
   defmodule State do
-    defstruct client: :nil, handlers: MapSet.new(), token: :nil, aliases: %{}
+    defstruct client: :nil, handlers: MapSet.new(), token: :nil, aliases: %{}, channels: %{}
   end
 
   def start_link(client,token) do
@@ -84,15 +84,43 @@ defmodule SlackManager do
     {:reply, {:ok, {hash, channelname}}, new_state}
   end
 
-  def handle_call({:dehash_channel, channelhash}, _from, state = %{aliases: aliasmap}) do
-    {hash, channelname} = dehash_channel(channelhash, state)
-    new_state = %{state | aliases: Map.put(aliasmap, channelname, hash)}
-    {:reply, {:ok, {hash, channelname}}, new_state}
+  def handle_call({:dehash_channel, channelhash}, _from, state = %{channels: cs}) do
+    Logger.debug "Dehashing channel #{channelhash}"
+    case Map.get(cs, channelhash) do
+      :nil -> {:hash, hash, :name, name} = dehash_channel_slack(channelhash, state)
+              new_state = %{state | channels: Map.put(cs, hash, name)}
+              {:reply, {:ok, {hash, name}}, new_state}
+      name -> {:reply, {:ok, {channelhash, name}}, state}
+    end
   end
 
   ###########
   # Web API #
   ###########
+
+  ## HASHING
+
+  # Aliases a channelanme. E.g. alias_channel("random") => "ABCDEF"
+  defp hash_channel(channelname, state = %{aliases: aliasmap}) do
+    case aliasmap[channelname] do
+      :nil -> hash_channel_slack(channelname, state)
+      hash -> {hash, channelname}
+    end
+  end
+
+  # Fetches the hash from a channel name via the Slack API.
+  defp hash_channel_slack(channelname, state) do
+    Logger.debug "Hashing channel #{channelname} through the API."
+    channels = Slack.Web.Channels.list(%{token: state.token}) 
+    groups   = Slack.Web.Groups.list(%{token: state.token})
+    Enum.concat(groups["groups"], channels["channels"])
+    |> Enum.map(fn(c) ->
+                  {c["id"], c["name"]}
+                end)
+    |> List.keyfind(channelname, 1, {:nil, channelname})
+  end
+
+  ## DEHASHING
 
   # Dealiases a single hash. Expects a hash in the form of "ABCDEF".
   defp dealias_userhash(user_hash, state = %{aliases: aliasmap}) do
@@ -103,50 +131,23 @@ defmodule SlackManager do
   end
 
   defp dealias_userhash_slack(user_hash, state) do
-    Logger.debug "Dehashing #{user_hash} through the API."
+    Logger.debug "Dehashing user #{user_hash} through the API."
     info = Slack.Web.Users.info(user_hash, %{token: state.token})
     username = Map.get(Map.get(info, "user"), "name")
     {:ok, username}
   end
 
-
-  # Aliases a channelanme. E.g. alias_channel("random") => "ABCDEF"
-  defp hash_channel(channelname, state = %{aliases: aliasmap}) do
-    case aliasmap[channelname] do
-      :nil -> hash_channel_slack(channelname, state)
-      hash -> {hash, channelname}
-    end
-  end
-
-
-  # Turns a channel hashname into the channel name.
-  defp dehash_channel(hash, state = %{aliases: aliasmap}) do
-    values = Map.to_list aliasmap
-    {hash, name} = List.keyfind(values, hash, 1, {hash, :nil})
-    case name do
-      :nil -> dehash_channel_slack(hash, state)
-      hash -> {hash, name}
-    end
-  end
-
-  # Fetches the hash from a channel name via the Slack API.
-  defp hash_channel_slack(channelname, state) do
-    Logger.debug "Hashing #{channelname} through the API."
-    res = Slack.Web.Channels.list(%{token: state.token})
-    res["channels"]
-    |> Enum.map(fn(c) ->
-                  {c["id"], c["name"]}
-                end)
-    |> List.keyfind(channelname, 1, {:nil, channelname})
-  end
-
   # Turns a channel hashname into the channel name via the Slack API.
   defp dehash_channel_slack(hash, state) do
-    Logger.debug "Dehashing #{hash} through the API."
-    res = Slack.Web.Channels.list(%{token: state.token})
-    res["channels"]
+    Logger.debug "Dehashing channel #{hash} through the API."
+    channels = Slack.Web.Channels.list(%{token: state.token}) 
+    groups   = Slack.Web.Groups.list(%{token: state.token})
+    {hash, name} = Enum.concat(groups["groups"], channels["channels"])
     |> Enum.map(fn(c) -> {c["id"], c["name"]} end)
     |> List.keyfind(hash, 0, {hash, :nil})
+    
+    Logger.debug "API result: #{hash} resolved to #{name}"
+    {:hash, hash, :name, name}
   end
 
   #############

@@ -1,9 +1,11 @@
 defmodule Bot.Benvolios do
   use Plugin
 
-  @boss slack_token = Application.fetch_env!(:slack, :benvolios_owner)
+  @boss Application.fetch_env!(:slack, :benvolios_owner)
 
-  def on_message(<<"order "::utf8, rest::bitstring>>, _channel, sender) do
+  @channel Application.fetch_env!(:slack, :benvolios_channel)
+
+  def on_message(<<"order "::utf8, rest::bitstring>>, @channel, sender) do
     case String.split(rest) do
       []          -> {:noreply}
       [subject|_] -> :ok = handle_order(sender, rest)
@@ -11,7 +13,12 @@ defmodule Bot.Benvolios do
     end
   end
 
-  def on_message(<<"order?"::utf8, _::bitstring>>, _channel, sender) do
+  def on_message(<<"forget order"::utf8, rest::bitstring>>, @channel, sender) do
+    Brain.Benvolios.forget_order(sender)
+    {:noreply}
+  end
+
+  def on_message(<<"order?"::utf8, _::bitstring>>, @channel, sender) do
     {:ok, order} = Brain.Benvolios.get_order(sender)
     case order do
       :nil  -> {:ok, "No order registered for #{sender}"}
@@ -19,7 +26,7 @@ defmodule Bot.Benvolios do
     end
   end
 
-  def on_message(<<"list"::utf8, _::bitstring>>, _channel, sender) when sender == @boss do
+  def on_message(<<"list"::utf8, _::bitstring>>, @channel, @boss) do
     {:ok, orders} = Brain.Benvolios.list()
     IO.inspect orders
 
@@ -36,14 +43,35 @@ defmodule Bot.Benvolios do
     end
   end
 
-  def on_message(<<"clear orders"::utf8, _::bitstring>>, _channel, sender) when sender == @boss do
+  def on_message(<<"clear orders"::utf8, _::bitstring>>, @channel, @boss) do
     :ok = Brain.Benvolios.clear()
     {:noreply}
+  end
+
+  def on_message(<<"help"::utf8>>, _channel, _sender) do
+    res = """
+    ```
+    order        : Order something.
+                   Example: "order legumax white bread".
+    forget order : Forgets your current order.
+                   Example: "forget order"
+    order?       : Shows what you have ordered at this point.
+                   Example: "order?"
+    list         : Lists the current orders.
+                   Example: "list"
+    clear orders : Forgets all the orders.
+                   Example: "clear orders"
+    ```
+    Ps: Only the admin can execute `list` and `clear orders`
+    
+    """
+    {:ok, res}
   end
 
   def on_message(text, channel, sender) do
     {:noreply}
   end
+
   ###########
   # Private #
   ###########
