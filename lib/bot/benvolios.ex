@@ -8,12 +8,12 @@ defmodule Bot.Benvolios do
   def on_message(<<"order "::utf8, rest::bitstring>>, @channel, sender) do
     case String.split(rest) do
       []          -> {:noreply}
-      [subject|_] -> :ok = handle_order(sender, rest)
+      [_subject|_] -> :ok = handle_order(sender, rest)
                      {:ok,"#{sender} has ordered #{rest}"}
     end
   end
 
-  def on_message(<<"forget order"::utf8, rest::bitstring>>, @channel, sender) do
+  def on_message(<<"forget order"::utf8, _rest::bitstring>>, @channel, sender) do
     Brain.Benvolios.forget_order(sender)
     {:noreply}
   end
@@ -68,7 +68,7 @@ defmodule Bot.Benvolios do
     {:ok, res}
   end
 
-  def on_message(text, channel, sender) do
+  def on_message(_text, _hannel, _sender) do
     {:noreply}
   end
 
