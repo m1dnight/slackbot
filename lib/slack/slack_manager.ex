@@ -111,7 +111,7 @@ defmodule SlackManager do
   # Fetches the hash from a channel name via the Slack API.
   defp hash_channel_slack(channelname, state) do
     Logger.debug "Hashing channel #{channelname} through the API."
-    channels = Slack.Web.Channels.list(%{token: state.token}) 
+    channels = Slack.Web.Channels.list(%{token: state.token})
     groups   = Slack.Web.Groups.list(%{token: state.token})
     Enum.concat(groups["groups"], channels["channels"])
     |> Enum.map(fn(c) ->
@@ -140,12 +140,12 @@ defmodule SlackManager do
   # Turns a channel hashname into the channel name via the Slack API.
   defp dehash_channel_slack(hash, state) do
     Logger.debug "Dehashing channel #{hash} through the API."
-    channels = Slack.Web.Channels.list(%{token: state.token}) 
+    channels = Slack.Web.Channels.list(%{token: state.token})
     groups   = Slack.Web.Groups.list(%{token: state.token})
     {hash, name} = Enum.concat(groups["groups"], channels["channels"])
     |> Enum.map(fn(c) -> {c["id"], c["name"]} end)
     |> List.keyfind(hash, 0, {hash, :nil})
-    
+
     Logger.debug "API result: #{hash} resolved to #{name}"
     {:hash, hash, :name, name}
   end

@@ -26,6 +26,7 @@ defmodule Plugin do
 
       def handle_info(message = %{type: "message", text: text, user: from}, state) do
         reply = on_message(text, message.channel, from)
+
         case reply do
           {:ok, reply}     ->
             SlackManager.send_message("#{reply}", message.channel)
@@ -34,6 +35,7 @@ defmodule Plugin do
           {:noreply}       ->
             :noop
         end
+        
         {:noreply, state}
       end
 

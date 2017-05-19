@@ -1,8 +1,8 @@
-defmodule OhaiIrc.Mixfile do
+defmodule Slackbot.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :ohai_irc,
+    [app: Slackbot,
      version: "0.0.1",
      elixir: "~> 1.4",
      deps: deps()]
@@ -13,7 +13,7 @@ defmodule OhaiIrc.Mixfile do
   # Type `mix help compile.app` for more information
   def application do
     [applications: [:logger, :httpoison, :slack, :timex],
-     mod: {OhaiIrc, []}]
+     mod: {Slackbot, []}]
   end
 
   # Dependencies can be Hex packages:

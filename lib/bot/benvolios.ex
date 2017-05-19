@@ -1,10 +1,11 @@
 defmodule Bot.Benvolios do
   use Plugin
 
-  @boss Application.fetch_env!(:slack, :benvolios_owner)
-
+  @boss    Application.fetch_env!(:slack, :benvolios_owner)
   @channel Application.fetch_env!(:slack, :benvolios_channel)
 
+  # The message "order x y z" is used to order a sandwich. "x y z" will be
+  # the order.
   def on_message(<<"order "::utf8, rest::bitstring>>, @channel, sender) do
     case String.split(rest) do
       []          -> {:noreply}
@@ -13,22 +14,26 @@ defmodule Bot.Benvolios do
     end
   end
 
+  # The message "forget order" will forget the order for the sender of that
+  # mesasge.
   def on_message(<<"forget order"::utf8, _rest::bitstring>>, @channel, sender) do
     Brain.Benvolios.forget_order(sender)
     {:noreply}
   end
 
+  # "order?" will print out the outstanding order of the sender, if any.
   def on_message(<<"order?"::utf8, _::bitstring>>, @channel, sender) do
     {:ok, order} = Brain.Benvolios.get_order(sender)
     case order do
       :nil  -> {:ok, "No order registered for #{sender}"}
-      order -> {:ok, "You have ordered #{order}"}
+      order -> {:ok, "You have ordered \"#{order}\""}
     end
   end
 
+  # Prints out all the outstanding orders.
+  # Restricted to admins only.
   def on_message(<<"list"::utf8, _::bitstring>>, @channel, @boss) do
     {:ok, orders} = Brain.Benvolios.list()
-    IO.inspect orders
 
     case orders do
       :nil   -> {:ok, "No orders yet.."}
@@ -38,16 +43,19 @@ defmodule Bot.Benvolios do
                   res = orders
                   |> Enum.map(fn {k,v} -> "#{k} : #{v}" end)
                   |> Enum.join("\n")
-                  {:ok, res}
+                  {:ok, "```#{res}```"}
                 end
     end
   end
 
+  # Clears out all the outstanding orders.
+  # Restricted to admins only.
   def on_message(<<"clear orders"::utf8, _::bitstring>>, @channel, @boss) do
     :ok = Brain.Benvolios.clear()
     {:noreply}
   end
 
+  # Prints out help message.
   def on_message(<<"help"::utf8>>, _channel, _sender) do
     res = """
     ```
@@ -63,7 +71,7 @@ defmodule Bot.Benvolios do
                    Example: "clear orders"
     ```
     Ps: Only the admin can execute `list` and `clear orders`
-    
+
     """
     {:ok, res}
   end
