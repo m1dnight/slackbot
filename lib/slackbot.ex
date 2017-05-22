@@ -10,6 +10,8 @@ defmodule Slackbot do
       supervisor(Supervisor.Connection, []),
       # - The data of the bot (karma etc)
       supervisor(Supervisor.Brain, []),
+      # Database
+      supervisor(Slackbot.Repo, [])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html

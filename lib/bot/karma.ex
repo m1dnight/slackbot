@@ -3,8 +3,16 @@ defmodule Bot.Karma do
 
   def on_message(<<"karma "::utf8, rest::bitstring>>, _channel, _from) do
     case String.split(rest) do
-      []          -> {:noreply}
-      [subject|_] -> {:ok,"Points for #{subject}: #{Brain.Karma.get(subject)}"}
+      []          -> 
+        {:noreply}
+      [subject|_] -> 
+        karma = Slackbot.Karma.get_karma(subject)
+        case karma do
+          {:ok, u, karma} ->
+            {:ok,"Points for #{subject}: #{karma}"}
+          {:err, _} ->
+            {:ok, "I don't know who or what you mean.."}
+        end
     end
   end
 
@@ -30,7 +38,7 @@ defmodule Bot.Karma do
     |> Enum.filter(fn(x) -> String.length(x) > 1 end)
     |> List.first
     |> String.downcase
-    function = if operator == "++", do: &Brain.Karma.increment/1, else: &Brain.Karma.decrement/1
+    function = if operator == "++", do: &Slackbot.Karma.increment/1, else: &Slackbot.Karma.decrement/1
     function.(subject) # returns the new karma
     process_karma_list(rest, channel)
   end

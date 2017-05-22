@@ -2,7 +2,7 @@ defmodule Slackbot.Mixfile do
   use Mix.Project
 
   def project do
-    [app: Slackbot,
+    [app: :slackbot,
      version: "0.0.1",
      elixir: "~> 1.4",
      deps: deps()]
@@ -12,7 +12,7 @@ defmodule Slackbot.Mixfile do
   #
   # Type `mix help compile.app` for more information
   def application do
-    [applications: [:logger, :httpoison, :slack, :timex],
+    [applications: [:logger, :httpoison, :slack, :timex, :ecto, :postgrex],
      mod: {Slackbot, []}]
   end
 
@@ -31,7 +31,9 @@ defmodule Slackbot.Mixfile do
      {:poison,        "~> 3.0"},
      {:timex,         "~> 3.1.7"},
      {:feeder_ex,     "~> 1.0"},
-     {:html_entities, "~> 0.3"}
+     {:html_entities, "~> 0.3"},
+     {:ecto,          "~> 2.1.4"},
+     {:postgrex,      ">= 0.13.2"}
    ]
   end
 end
