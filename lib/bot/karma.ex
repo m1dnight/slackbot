@@ -6,7 +6,7 @@ defmodule Bot.Karma do
       []          -> 
         {:noreply}
       [subject|_] -> 
-        karma = Slackbot.Karma.get_karma(subject)
+        karma = Slackbot.Karma.get(subject)
         case karma do
           {:ok, u, karma} ->
             {:ok,"Points for #{subject}: #{karma}"}

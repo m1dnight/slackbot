@@ -1,14 +1,15 @@
 defmodule Slackbot.Karma do
-    use Ecto.Schema
 
-    alias Slackbot.Repo, as: Repo
-    require Ecto.Query 
-    alias Slackbot.Karma, as: Karma
+   use Ecto.Schema
 
-    schema "karma" do
-      field :username, :string
-      field :karma,    :integer
-    end
+  alias Slackbot.Repo, as: Repo
+  require Ecto.Query 
+  alias Slackbot.Karma, as: Karma
+
+  schema "karma" do
+    field :username, :string
+    field :karma,    :integer
+  end
 
   def changeset(karma, params \\ %{}) do
     karma
@@ -17,9 +18,11 @@ defmodule Slackbot.Karma do
     |> Ecto.Changeset.unique_constraint(:username)
   end
 
+  #####################
+  # Internal Wrappers #
+  #####################
 
-
-  def get_karma(username) do
+  defp get_karma(username) do
     rec = Karma |> Repo.get_by(username: username) 
     case rec do
       nil                      -> {:err, "user not found"}
@@ -43,18 +46,6 @@ defmodule Slackbot.Karma do
       cs  = Slackbot.Karma.changeset(rec, %{username: username, karma: delta})
       Slackbot.Repo.insert(cs)      
     end
-
-  end
-
-  def increment(username), do: update_karma(username, 1)
-  def decrement(username), do: update_karma(username, -1)
-
-  def top(n) do
-    tail(n, :desc)
-  end
-
-  def bottom(n) do
-    tail(n, :asc)
   end
 
   defp tail(n, order) do
@@ -63,4 +54,18 @@ defmodule Slackbot.Karma do
     |> Ecto.Query.limit(^n) 
     |> Slackbot.Repo.all    
   end
+
+  #############
+  # Interface #
+  #############
+
+  def increment(username), do: update_karma(username, 1)
+
+  def decrement(username), do: update_karma(username, -1)
+
+  def top(n), do: tail(n, :desc)
+
+  def bottom(n), do: tail(n, :asc)
+
+  def get(username), do: get_karma(username)
 end
