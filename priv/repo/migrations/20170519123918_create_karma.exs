@@ -8,7 +8,4 @@ defmodule Slackbot.Repo.Migrations.CreateKarma do
     end
     create unique_index(:karma, [:subject])
   end
-
-
-
 end
