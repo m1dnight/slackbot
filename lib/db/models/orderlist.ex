@@ -28,6 +28,14 @@ defmodule Slackbot.OrderList do
   # Api Functions #
   #################
 
+  def close_orderlist(orderlist) do
+    orderlist_cs = changeset(orderlist, %{open: false})
+    orderlist = Repo.update! orderlist_cs
+    orderlist
+  end
+
+  
+
   def current_orders() do
     case existing_order?() do
       # No order at all
