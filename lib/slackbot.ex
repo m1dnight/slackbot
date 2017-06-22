@@ -21,27 +21,19 @@ defmodule Slackbot do
   end
 end
 
+# alias Slackbot.Repo ; alias Slackbot.OrderEntry ; alias Slackbot.Repo
 defmodule Test do
   alias Slackbot.OrderEntry
   alias Slackbot.OrderList
   alias Slackbot.Repo
 
-  def test() do
-    order     = %OrderEntry{value: "een broodje"}
-    orderlist = %OrderList{week: "23"}
+  import Ecto.Query
 
-    IO.inspect order
-    IO.inspect orderlist
+  def put_testdata() do
+    order     = %OrderEntry{value: "een broodje"}
+    orderlist = %OrderList{week: 25}
 
     order = Repo.insert! order |> Repo.preload(:order_lists)
     orderlist = Repo.insert! orderlist |> Repo.preload(:order_entries)
-
-    IO.inspect order
-    IO.inspect orderlist
-
-    orderlist_cs = Ecto.Changeset.change(orderlist)
-
-    orderlist_added = Ecto.Changeset.put_assoc(orderlist_cs, :order_entries, [order])
-
   end
 end
