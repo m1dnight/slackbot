@@ -82,4 +82,14 @@ defmodule Slackbot.OrderList do
     most_recent
   end
 
+  def current_order_by(username) do
+    orderlist = latest_order()
+    if orderlist.open == true do
+      orderlist.order_entries
+      |> Enum.filter(fn(e) -> e.user == username end)
+      |> hd
+    else
+      nil
+    end
+  end
 end

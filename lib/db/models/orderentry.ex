@@ -18,7 +18,7 @@ defmodule Slackbot.OrderEntry do
   def changeset(orderentry, params \\ %{}) do
     orderentry
     |> Repo.preload(:order_lists)
-    |> cast(params, [:value])
+    |> cast(params, [:value, :user])
     |> cast_assoc(:order_lists)
   end
 
@@ -26,8 +26,8 @@ defmodule Slackbot.OrderEntry do
   # API Functions #
   #################
 
-  def new_order(value) do
-    order = %OrderEntry{value: value}
+  def new_order(value, username) do
+    order = %OrderEntry{value: value, user: username}
     order = Repo.insert! order |> Repo.preload(:order_lists)
     order
   end
