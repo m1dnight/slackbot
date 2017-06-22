@@ -11,7 +11,10 @@ defmodule Slackbot.OrderEntry do
   schema "order_entries" do
     field :value, :string
     field :user, :string
-    many_to_many :order_lists, Slackbot.OrderList, join_through: "order_entries_order_lists"
+    many_to_many :order_lists,
+                 Slackbot.OrderList,
+                 join_through: "order_entries_order_lists",
+                 on_delete:  :delete_all
     timestamps
   end
 
@@ -26,7 +29,7 @@ defmodule Slackbot.OrderEntry do
   # API Functions #
   #################
 
-  def new_order(value, username) do
+  def new_order(username, value) do
     order = %OrderEntry{value: value, user: username}
     order = Repo.insert! order |> Repo.preload(:order_lists)
     order

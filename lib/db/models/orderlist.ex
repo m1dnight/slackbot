@@ -8,9 +8,14 @@ defmodule Slackbot.OrderList do
   alias Slackbot.OrderList
   alias Slackbot.Repo
 
+  require Logger
+
   schema "order_lists" do
     field :open, :boolean
-    many_to_many :order_entries, Slackbot.OrderEntry, join_through: "order_entries_order_lists"
+    many_to_many :order_entries,
+                 Slackbot.OrderEntry,
+                 join_through: "order_entries_order_lists",
+                 on_delete: :delete_all
     timestamps
   end
 
@@ -25,7 +30,8 @@ defmodule Slackbot.OrderList do
   # Api Functions #
   #################
 
-  def close_orderlist(orderlist) do
+  def close_orderlist() do
+    orderlist = latest_orderlist()
     # Close the order list
     orderlist_cs = changeset(orderlist, %{open: false})
     orderlist = Repo.update! orderlist_cs
@@ -36,7 +42,7 @@ defmodule Slackbot.OrderList do
   def current_orders() do
     create_orderlist_if_none()
     orderlist = create_orderlist_if_none()
-    {:ok, orderlist.order_entries}
+    orderlist.order_entries
   end
 
   def store_order(order_entry) do
@@ -44,16 +50,40 @@ defmodule Slackbot.OrderList do
     |> add_order_to_current(order_entry)
   end
 
-  def delete_order(order_entry) do
-    orderlist = latest_order()
-
+  def current_order_by(username) do
+    orderlist = latest_orderlist()
+    case orderlist do
+      nil -> nil
+      ol  -> if orderlist.open == true do
+                orders = orderlist.order_entries
+                |> Enum.filter(fn(e) -> e.user == username end)
+                case orders do
+                  [] -> nil
+                  xs -> hd xs
+                end
+              else
+                nil
+              end
+    end
   end
+
+  def delete_current_order_by(username) do
+    order = current_order_by(username)
+    IO.inspect order
+    case order do
+      nil -> {:ok, :not_found}
+      _   -> Repo.delete! order
+             {:ok, :deleted}
+    end
+  end
+
   #####################
   # Private Functions #
   #####################
 
   defp create_orderlist_if_none() do
-    case latest_order() do
+    most_recent = Repo.one(from(ol in OrderList, order_by: [desc: ol.inserted_at], limit: 1)) |> Repo.preload(:order_entries)
+    case most_recent do
       nil -> start_new_order()
       x   -> if x.open do
                x
@@ -77,19 +107,10 @@ defmodule Slackbot.OrderList do
     orderlist
   end
 
-  def latest_order() do
+  def latest_orderlist() do
+    create_orderlist_if_none()
     most_recent = Repo.one(from(ol in OrderList, order_by: [desc: ol.inserted_at], limit: 1)) |> Repo.preload(:order_entries)
     most_recent
   end
 
-  def current_order_by(username) do
-    orderlist = latest_order()
-    if orderlist.open == true do
-      orderlist.order_entries
-      |> Enum.filter(fn(e) -> e.user == username end)
-      |> hd
-    else
-      nil
-    end
-  end
 end

@@ -1,50 +1,37 @@
 defmodule Bot.Benvolios do
   use Plugin
+  require Logger
 
   @boss Application.fetch_env!(:slack, :benvolios_owner)
-
   @channel Application.fetch_env!(:slack, :benvolios_channel)
 
-  def on_message(<<cmd::utf8, " "::utf8, rest::bitstring>>, @channel, sender) do
-    IO.inspect cmd
-    cased = String.downcase(cmd)
-
-    case cased do
-      "order " -> case String.split(rest) do
-                    []           -> {:noreply}
-                    [_subject|_] -> :ok = handle_order(sender, rest)
-                                    {:ok,"#{sender} has ordered #{rest}"}
-                  end
-      _ -> {:noreply}
+  def on_message(<<"order "::utf8, order::bitstring>>, @channel, sender) do
+    handle_order(sender, order)
+    {:ok,"#{sender} has ordered #{order}"}
   end
-end
+
   def on_message(<<"forget order"::utf8, _rest::bitstring>>, @channel, sender) do
     Brain.Benvolios.forget_order(sender)
     {:noreply}
   end
 
   def on_message(<<"order?"::utf8, _::bitstring>>, @channel, sender) do
-    {:ok, order} = Brain.Benvolios.get_order(sender)
+    order = Brain.Benvolios.get_order(sender)
     case order do
-      :nil  -> {:ok, "No order registered for #{sender}"}
-      order -> {:ok, "You have ordered #{order}"}
+      nil   -> {:ok, "No order registered for #{sender}"}
+      order -> {:ok, "You have ordered: *#{order}*"}
     end
   end
 
   def on_message(<<"list"::utf8, _::bitstring>>, @channel, @boss) do
-    {:ok, orders} = Brain.Benvolios.list()
-    IO.inspect orders
+    orders = Brain.Benvolios.list()
 
     case orders do
-      :nil   -> {:ok, "No orders yet.."}
-      orders -> if orders == %{} do
-                  {:ok, "No orders yet.."}
-                else
-                  res = orders
-                  |> Enum.map(fn {k,v} -> "#{k} : #{v}" end)
-                  |> Enum.join("\n")
-                  {:ok, res}
-                end
+      []     -> {:ok, "No orders yet.."}
+      orders -> res = orders
+                |> Enum.map(fn %{orderer: o, value: v} -> "#{o} : #{v}" end)
+                |> Enum.join("\n")
+                {:ok, res}
     end
   end
 
@@ -67,7 +54,7 @@ end
     clear orders : Forgets all the orders.
                    Example: "clear orders"
     ```
-    Ps: Only the admin can execute `list` and `clear orders`
+    *Ps: Only the admin can execute `list` and `clear orders`*
 
     """
     {:ok, res}
