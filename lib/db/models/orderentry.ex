@@ -10,6 +10,7 @@ defmodule Slackbot.OrderEntry do
 
   schema "order_entries" do
     field :value, :string
+    field :user, :string
     many_to_many :order_lists, Slackbot.OrderList, join_through: "order_entries_order_lists"
     timestamps
   end

@@ -1,31 +1,9 @@
 defmodule Brain.Benvolios do
   require Logger
-  use GenServer
-
-  def start_link(initial_state \\ []) do
-    GenServer.start_link __MODULE__, [initial_state], name: __MODULE__
-  end
-
-  def init([[]]) do
-    Logger.debug "No orders provided. Reading from disk."
-    case read_orders() do
-      {:ok, state} ->
-        {:ok, state}
-      _ ->
-        Logger.warn "No initial orders and can't read backup, starting with empty order."
-        {:ok, %{}}
-    end
-  end
-  def init([state]) do
-    {:ok, state}
-  end
-
-  #############
-  # Interface #
-  #############
 
   def save_order(orderer, order) do
-    GenServer.call __MODULE__, {:order, orderer, order}
+    order = Slackbot.OrderEntry.new_order(order)
+    Slackbot.OrderList.store_order(order)
   end
 
   def forget_order(orderer) do

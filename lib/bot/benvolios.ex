@@ -11,9 +11,9 @@ defmodule Bot.Benvolios do
 
     case cased do
       "order " -> case String.split(rest) do
-                    []          -> {:noreply}
+                    []           -> {:noreply}
                     [_subject|_] -> :ok = handle_order(sender, rest)
-                                  {:ok,"#{sender} has ordered #{rest}"}
+                                    {:ok,"#{sender} has ordered #{rest}"}
                   end
       _ -> {:noreply}
   end
@@ -68,7 +68,7 @@ end
                    Example: "clear orders"
     ```
     Ps: Only the admin can execute `list` and `clear orders`
-    
+
     """
     {:ok, res}
   end

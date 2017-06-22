@@ -44,6 +44,10 @@ defmodule Slackbot.OrderList do
     |> add_order_to_current(order_entry)
   end
 
+  def delete_order(order_entry) do
+    orderlist = latest_order()
+
+  end
   #####################
   # Private Functions #
   #####################
@@ -60,8 +64,9 @@ defmodule Slackbot.OrderList do
   end
 
   defp add_order_to_current(orderlist, orderentry) do
+    orders = orderlist.order_entries
     orderlist_cs = changeset(orderlist)
-    orderlist_cs = Ecto.Changeset.put_assoc(orderlist_cs, :order_entries, [orderentry])
+    orderlist_cs = Ecto.Changeset.put_assoc(orderlist_cs, :order_entries, [orderentry | orders])
     orderlist = Repo.update! orderlist_cs
     orderlist
   end
@@ -72,8 +77,9 @@ defmodule Slackbot.OrderList do
     orderlist
   end
 
-  defp latest_order() do
+  def latest_order() do
     most_recent = Repo.one(from(ol in OrderList, order_by: [desc: ol.inserted_at], limit: 1)) |> Repo.preload(:order_entries)
     most_recent
   end
+
 end

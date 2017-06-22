@@ -4,6 +4,7 @@ defmodule Slackbot.Repo.Migrations.CreateOrderentry do
   def change do
     create table(:order_entries) do
       add :value, :string
+      add :user, :string
       timestamps
     end
   end

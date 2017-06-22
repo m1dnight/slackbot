@@ -8,8 +8,6 @@ defmodule Slackbot do
       # Define workers and child supervisors to be supervised
       # - The Slack connection
       supervisor(Supervisor.Connection, []),
-      # - The data of the bot (karma etc)
-      supervisor(Supervisor.Brain, []),
       # Database
       supervisor(Slackbot.Repo, [])
     ]
