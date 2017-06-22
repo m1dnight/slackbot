@@ -9,7 +9,6 @@ defmodule Slackbot.OrderList do
   alias Slackbot.Repo
 
   schema "order_lists" do
-    field :week, :integer
     field :open, :boolean
     many_to_many :order_entries, Slackbot.OrderEntry, join_through: "order_entries_order_lists"
     timestamps
@@ -18,10 +17,8 @@ defmodule Slackbot.OrderList do
   def changeset(orderlist, params \\ %{}) do
     orderlist
     |> Repo.preload(:order_entries)
-    |> cast(params, [:week, :open])
+    |> cast(params, [:open])
     |> cast_assoc(:order_entries)
-    |> validate_required([:week])
-    |> unique_constraint(:week)
   end
 
   #################
@@ -29,44 +26,38 @@ defmodule Slackbot.OrderList do
   #################
 
   def close_orderlist(orderlist) do
+    # Close the order list
     orderlist_cs = changeset(orderlist, %{open: false})
     orderlist = Repo.update! orderlist_cs
-    orderlist
+    # Immediatly start a new one
+    start_new_order()
   end
 
-  
-
   def current_orders() do
-    case existing_order?() do
-      # No order at all
-      false ->
-        {:ok, []}
-      # Order is closed for the week
-      orderlist ->
-        {:ok, orderlist.order_entries}
-    end
+    create_orderlist_if_none()
+    orderlist = create_orderlist_if_none()
+    {:ok, orderlist.order_entries}
   end
 
   def store_order(order_entry) do
-    case {existing_order?(), open_order?()} do
-      # No order at all
-      {false, false} ->
-        orderlist = start_new_order()
-        add_order_to_current(orderlist, order_entry)
-        {:ok, "updated"}
-      # Order is closed for the week
-      {x, false} ->
-        {:error, "week closed"}
-      # Order and open
-      {orderlist, _open} ->
-        add_order_to_current(orderlist, order_entry)
-        {:ok, "updated"}
-    end
+    create_orderlist_if_none()
+    |> add_order_to_current(order_entry)
   end
 
   #####################
   # Private Functions #
   #####################
+
+  defp create_orderlist_if_none() do
+    case latest_order() do
+      nil -> start_new_order()
+      x   -> if x.open do
+               x
+             else
+               start_new_order()
+             end
+    end
+  end
 
   defp add_order_to_current(orderlist, orderentry) do
     orderlist_cs = changeset(orderlist)
@@ -76,25 +67,13 @@ defmodule Slackbot.OrderList do
   end
 
   defp start_new_order() do
-    {_, weeknum, _} = Timex.now |> Timex.iso_triplet
-    orderlist = %OrderList{week: weeknum, open: true}
+    orderlist = %OrderList{open: true}
     orderlist = Repo.insert! orderlist |> Repo.preload(:order_entries)
     orderlist
   end
 
-  defp open_order?() do
-    {_, weeknum, _} = Timex.now |> Timex.iso_triplet
-    case Repo.one(from ol in OrderList, where: ol.open == true) |> Repo.preload(:order_entries) do
-      nil -> false
-      x   -> x
-    end
-  end
-
-  defp existing_order?() do
-    {_, weeknum, _} = Timex.now |> Timex.iso_triplet
-    case Repo.one(from ol in OrderList, where: ol.week == ^weeknum) |> Repo.preload(:order_entries) do
-      nil -> false
-      x   -> x
-    end
+  defp latest_order() do
+    most_recent = Repo.one(from(ol in OrderList, order_by: [desc: ol.inserted_at], limit: 1)) |> Repo.preload(:order_entries)
+    most_recent
   end
 end

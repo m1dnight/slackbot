@@ -20,20 +20,3 @@ defmodule Slackbot do
     Supervisor.start_link(children, opts)
   end
 end
-
-# alias Slackbot.Repo ; alias Slackbot.OrderEntry ; alias Slackbot.Repo
-defmodule Test do
-  alias Slackbot.OrderEntry
-  alias Slackbot.OrderList
-  alias Slackbot.Repo
-
-  import Ecto.Query
-
-  def put_testdata() do
-    order     = %OrderEntry{value: "een broodje"}
-    orderlist = %OrderList{week: 25}
-
-    order = Repo.insert! order |> Repo.preload(:order_lists)
-    orderlist = Repo.insert! orderlist |> Repo.preload(:order_entries)
-  end
-end
