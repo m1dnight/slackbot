@@ -27,7 +27,7 @@ defmodule Slackbot.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [{:exgenius,      "~> 0.0.2"},
-     {:slack,         "~> 0.11.0"},
+     {:slack,         "~> 0.12.0"},
      {:poison,        "~> 3.0"},
      {:timex,         "~> 3.1.7"},
      {:feeder_ex,     "~> 1.0"},
