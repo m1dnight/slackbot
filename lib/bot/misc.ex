@@ -7,7 +7,7 @@ defmodule Bot.Misc do
     {:ok,"My owner is #{@owner}"}
   end
 
-  def on_message(<<"!bug "::utf8, target::bitstring>>, channel, from) do
+  def on_message(<<"!bug "::utf8, target::bitstring>>, _channel, _from) do
     {:ok, "#{target}, seems like are not happy with the current operations of the bot. If you feel like this hinders you in any way, feel free to write a patch and submit it on GitHub. You can find the repository at #{@github}"}
   end
 
