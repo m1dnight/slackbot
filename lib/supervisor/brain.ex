@@ -8,7 +8,8 @@ defmodule Supervisor.Brain do
   def init(_state) do
     children = [
       worker(Brain.Karma, []),
-      worker(Brain.Benvolios, [])
+      worker(Brain.Benvolios, []),
+      worker(Brain.DishwasherManager, [])
     ]
     supervise children, strategy: :one_for_one
   end
