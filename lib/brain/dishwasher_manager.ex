@@ -63,22 +63,18 @@ defmodule Brain.DishwasherManager do
   #########
 
   def handle_call(:users, _from, {_, users, _} = state) do
-    Logger.debug "brain -> users"
     {:reply, {:ok, users}, state}
   end
 
   def handle_call(:manager?, _from, {_, _, manager} = state) do
-    Logger.debug "brain -> manager?"
     {:reply, {:ok, manager}, state}
   end
 
   def handle_call(:schedule, _from, {schedule, _,_} = state) do
-    Logger.debug "brain -> schedule"
     {:reply, {:ok, schedule}, state}
   end
 
   def handle_call({:create_schedule, startDate}, _from, {_, users, }) do
-    Logger.debug "brain -> create_schedule"
     usersList = Map.to_list users
     {_, manager} = List.first(usersList)
     schedule = build_schedule(usersList, startDate)
@@ -86,7 +82,6 @@ defmodule Brain.DishwasherManager do
   end
 
   def handle_call({:add_user, user, fullname}, _from,  {schedule, users, manager}) do
-    Logger.debug "brain -> add_user #{user}"
     fullname = buildFullName(fullname)
     users = Map.put_new(users, user, fullname)
     schedule = add_to_schedule(schedule, user, fullname)
@@ -96,19 +91,21 @@ defmodule Brain.DishwasherManager do
 
 
   def handle_call({:remove_user, user}, _from, {schedule, users, manager}) do
-    Logger.debug "brain -> remove_user #{user}"
-    users = Map.delete(users, user)
-    save_state(users, @users_file)
-    {:reply, :ok, {schedule, users, manager}}
+    user = String.trim(user)
+    userList = Map.delete(users, user)
+    save_state(userList, @users_file)
+    {:reply, :ok, {schedule, userList, manager}}
+  end
+
+  def handle_call({:swap, userA, userB}, _from, {schedule, users, manager}) when schedule == %{} do
+    {:reply, {:error, "There is no schedule ready. Use the command 'help' for more information."}, {schedule, users, manager}}
   end
 
   def handle_call({:swap, userA, userB}, _from, {schedule, users, manager}) do
-    Logger.debug "brain -> swap order for duties of user #{userA} with #{userB}"
-
     case validate_user_names([userA, userB], users) do
       true ->
-              {_, dateA} = Map.get(users, userA)
-              {_, dateB} = Map.get(users, userB)
+              {_, dateA} = Map.get(schedule, userA)
+              {_, dateB} = Map.get(schedule, userB)
 
               schedule = schedule
                 |> Map.replace!(userA, dateB)
@@ -121,7 +118,6 @@ defmodule Brain.DishwasherManager do
 
     end
   end
-
 
 
   ###########
@@ -139,15 +135,15 @@ defmodule Brain.DishwasherManager do
 
     users = case usersData do
         {:ok, [values]} -> values
-      _               -> {:error}
+      _               -> %{}
       end
 
     schedule = case scheduleData do
       {:ok, [values]} -> values
-      _               -> {:error}
+      _               -> %{}
     end
 
-    {schedule, users}
+    {:ok, {schedule, users, :not_specified}}
   end
 
   defp buildFullName(fullName, acc \\ "")
@@ -159,7 +155,7 @@ defmodule Brain.DishwasherManager do
     buildFullName rest, acc
   end
 
-  defp add_to_schedule(%{} = schedule, _user, _fullName) do
+  defp add_to_schedule(%{} = schedule, _user, _fullName) when schedule == %{} do
     schedule
   end
 
@@ -170,6 +166,7 @@ defmodule Brain.DishwasherManager do
     Map.put(schedule, user, {fullName, Date.add(lastDate, 7)})
   end
 
+  defp  validate_user_names([], _users), do: true
   defp  validate_user_names([user| rest], users) do
     case Map.has_key?(users, user) do
        false -> "Invalid username! The user #{user} is not a registered."
@@ -178,7 +175,6 @@ defmodule Brain.DishwasherManager do
   end
 
   defp build_schedule(list, startDate, schedule \\ %{})
-
   defp build_schedule([], _startDate, schedule), do: schedule
 
   defp build_schedule([{k, v} | rest], startDate, schedule) do
