@@ -26,7 +26,7 @@ defmodule SlackLogic do
   which are in the form of some-sort of hashes.
   """
   def handle_event(message = %{type: "message", text: text, user: from}, slack, state) do
-    Logger.debug ">> #{text}"
+    Logger.debug ">>> #{text}"
     {:ok, sender}    = SlackManager.dealias_userhash(from)
     {:ok, m}         = SlackManager.dealias_message(text)
     {:ok, {_, chan}} = SlackManager.dehash_channel(message.channel)
@@ -67,6 +67,16 @@ defmodule SlackLogic do
   Logger.debug "<< #{channel}: #{text}"
     {:ok, {channel_id, _}} = SlackManager.hash_channel(channel)
     send_message(text, channel_id, slack)
+    {:ok, state}
+  end
+
+  @doc """
+  Info's come from the outside. IT allows us to send messages to the Slack
+  process.
+  """
+  def handle_info({:send_private_msg, text, user}, slack, state) do
+    Logger.debug "<< #{user}: #{text}"
+    send_message(text, "@#{user}", slack)
     {:ok, state}
   end
 
