@@ -24,18 +24,29 @@ defmodule Plugin do
         GenServer.start_link(__MODULE__, [args], [{:name, __MODULE__}])
       end
 
+      # "Handling indidual messages"
+      def handle_info(message = %{channel: nil, type: "message", text: text, user: from}, state) do
+        reply = on_message(text, :dishwasher_app, from)
+
+        case reply do
+          {:ok, reply}     -> SlackManager.send_private_message("#{reply}", from)
+          {:error, reason} -> IO.puts "Error in plugin #{reason}"
+          {:noreply}       -> :noop
+        end
+        
+        {:noreply, state}
+      end
+
       def handle_info(message = %{type: "message", text: text, user: from}, state) do
         reply = on_message(text, message.channel, from)
 
         case reply do
           {:ok, reply}     ->
             SlackManager.send_message("#{reply}", message.channel)
-          {:error, reason} ->
-            IO.puts "Error in plugin #{reason}"
-          {:noreply}       ->
-            :noop
+          {:error, reason} -> IO.puts "Error in plugin #{reason}"
+          {:noreply}       -> :noop
         end
-        
+
         {:noreply, state}
       end
 
