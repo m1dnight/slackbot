@@ -20,7 +20,7 @@ defmodule Bot.DiswasherManager do
 
     case manager do
        :no_specified -> {:ok, "The schedule has not been created. Use the command 'help' for more information."}
-       name          -> {:ok, "The current dishwasher manager is `#{manager}`"}
+       name          -> {:ok, "The current dishwasher manager is `#{name}`"}
     end
     
 
@@ -75,7 +75,7 @@ defmodule Bot.DiswasherManager do
     add_user            : Add a new user. The first argument is the "slack user name",
                           followed by its fullname.
                           Example: "add_user @humberto Humberto Rodriguez Avila"
-    add_user            : Remove an user.
+    remove_user         : Remove an user.
                           Example: "remove_user @humberto"
     ```
     Ps: Only the admin can execute `create_schedule`, `add_user`, and `remove_user`
