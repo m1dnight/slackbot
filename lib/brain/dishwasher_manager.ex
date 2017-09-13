@@ -4,6 +4,7 @@ defmodule Brain.DishwasherManager do
 
   @users_file "data/dishwasher_manager/users.dat"
   @schedule_file "data/dishwasher_manager/schedule.dat"
+  @holidays [~D[2017-12-25], ~D[2018-01-01] ]
 
   def start_link(initial_state \\ []) do
     GenServer.start_link __MODULE__, [initial_state], name: __MODULE__
@@ -37,6 +38,14 @@ defmodule Brain.DishwasherManager do
     GenServer.call __MODULE__, :manager?
   end
 
+  defp next_manager do
+    GenServer.call __MODULE__, :next_manager
+  end
+
+  def when?(user) do
+    GenServer.call __MODULE__, {:when?, user}
+  end
+
   def schedule() do
     GenServer.call __MODULE__, :schedule
   end
@@ -57,6 +66,18 @@ defmodule Brain.DishwasherManager do
     GenServer.call __MODULE__, {:remove_user, user}
   end
 
+  def set_manager_of_the_week() do
+    GenServer.call __MODULE__, :set_manager_of_the_week
+  end
+
+  def remove_users() do
+    GenServer.call __MODULE__, :remove_users
+  end
+
+  def remove_schedule() do
+    GenServer.call __MODULE__, :remove_schedule
+  end
+
 
   #########
   # Calls #
@@ -66,18 +87,56 @@ defmodule Brain.DishwasherManager do
     {:reply, {:ok, users}, state}
   end
 
-  def handle_call(:manager?, _from, {_, _, manager} = state) do
+  def handle_call(:manager?, _from, {_, users, manager} = state) do
+    fullName = Map.get(users, manager, :no_specified)
+    {:reply, {:ok, manager, fullName}, state}
+  end
+
+  def handle_call(:next_manager, _from, {schedule, users, _} = state) do
+    manager =
+      case get_next_manager(schedule) do
+        :no_specified -> {user, _} =List.first Map.to_list users
+                          user
+                 user -> user
+      end
+
     {:reply, {:ok, manager}, state}
+  end
+
+  def handle_call({:when?, user }, _from, {schedule, _, _} = state) do
+    {fullName, startDate} = Map.get(schedule, user, {:invalid_user, :no_specified})
+    {:reply, {:ok, fullName, startDate}, state}
+  end
+
+
+  def handle_call(:set_manager_of_the_week, _from, {schedule, users, _} ) do
+    {schedule, manager} =
+      case get_manager_of_week(schedule) do
+        :no_specified -> usersList = Map.to_list users
+                         sch = build_schedule(usersList, Date.utc_today)
+                         man = get_manager_of_week(sch)
+                         {sch, man}
+              manager -> {schedule, manager}
+    end
+    fullName = Map.get(users, manager, :no_specified)
+    {:reply, {:ok, fullName}, {schedule, users, manager}}
   end
 
   def handle_call(:schedule, _from, {schedule, _,_} = state) do
     {:reply, {:ok, schedule}, state}
   end
 
-  def handle_call({:create_schedule, startDate}, _from, {_, users, }) do
+  def handle_call({:create_schedule, startDate}, _from, {_, users, _}) do
+    IO.puts "brain.create_schedule"
     usersList = Map.to_list users
-    {_, manager} = List.first(usersList)
+
+    {:ok, startDate} = startDate
+                       |> String.trim()
+                       |> Date.from_iso8601()
+
+
     schedule = build_schedule(usersList, startDate)
+    manager = get_manager_of_week(schedule)
     {:reply, {:ok, schedule}, {schedule, users, manager}}
   end
 
@@ -97,26 +156,38 @@ defmodule Brain.DishwasherManager do
     {:reply, :ok, {schedule, userList, manager}}
   end
 
-  def handle_call({:swap, userA, userB}, _from, {schedule, users, manager}) when schedule == %{} do
+  def handle_call({:swap, _userA, _userB}, _from, {schedule, users, manager}) when schedule == %{} do
     {:reply, {:error, "There is no schedule ready. Use the command 'help' for more information."}, {schedule, users, manager}}
   end
 
   def handle_call({:swap, userA, userB}, _from, {schedule, users, manager}) do
     case validate_user_names([userA, userB], users) do
       true ->
-              {_, dateA} = Map.get(schedule, userA)
-              {_, dateB} = Map.get(schedule, userB)
+              {nameA, dateA} = Map.get(schedule, userA)
+              {nameB, dateB} = Map.get(schedule, userB)
 
-              schedule = schedule
-                |> Map.replace!(userA, dateB)
-                |> Map.replace!(userB, dateA)
+              newSchedule = schedule
+                |> Map.replace!(userA, {nameA, dateB})
+                |> Map.replace!(userB, {nameB, dateA})
 
-              save_state(schedule, @schedule_file)
-              {:reply, :ok, {schedule, users, manager}}
+              save_state(newSchedule, @schedule_file)
+              manager = get_manager_of_week(newSchedule)
+              {:reply, :ok, {newSchedule, users, manager}}
 
       msg -> {:reply, {:error, msg}, {schedule, users, manager}}
 
     end
+  end
+
+  def handle_call(:remove_users, _from, _state) do
+    save_state(%{}, @users_file)
+    save_state(%{}, @schedule_file)
+    {:reply, :ok, {%{}, %{}, :no_specified}}
+  end
+
+  def handle_call(:remove_schedule, _from, {_, users, _}) do
+    save_state(%{}, @schedule_file)
+    {:reply, :ok, {%{}, users, :no_specified}}
   end
 
 
@@ -143,7 +214,9 @@ defmodule Brain.DishwasherManager do
       _               -> %{}
     end
 
-    {:ok, {schedule, users, :not_specified}}
+    manager = get_manager_of_week(schedule)
+
+    {:ok, {schedule, users, manager}}
   end
 
   defp buildFullName(fullName, acc \\ "")
@@ -163,7 +236,7 @@ defmodule Brain.DishwasherManager do
     {_, {_, lastDate}} = schedule
                          |> Enum.to_list
                          |> List.last
-    Map.put(schedule, user, {fullName, Date.add(lastDate, 7)})
+    Map.put(schedule, user, {fullName, get_next_valid_date(Date.add(lastDate, 7))})
   end
 
   defp  validate_user_names([], _users), do: true
@@ -178,9 +251,49 @@ defmodule Brain.DishwasherManager do
   defp build_schedule([], _startDate, schedule), do: schedule
 
   defp build_schedule([{k, v} | rest], startDate, schedule) do
+    startDate = get_next_valid_date(startDate)
     schedule = Map.put(schedule, k, {v, startDate} )
-    nextDate = Date.add(startDate, 7)
+    nextDate = get_next_valid_date(Date.add(startDate, 7))
     build_schedule(rest,nextDate, schedule )
+  end
+
+  defp get_next_valid_date(date) do
+    holiday? = Enum.find(@holidays, fn(x) -> Date.compare(date, x) == :eq end)
+    case holiday? do
+       nil -> get_start_date(date)
+       _   -> get_next_valid_date(Date.add(date, 7))
+    end
+  end
+
+  defp get_manager_of_week(schedule) when schedule == %{}, do: :no_specified
+  defp get_manager_of_week(schedule) do
+    startDate = get_start_date()
+    result = Enum.find(schedule, fn({k, {_, date}}) -> Date.compare(startDate, date) == :eq end)
+    case result do
+      nil      -> :no_specified
+      {user,_} -> user
+    end
+
+  end
+
+
+  defp get_next_manager(schedule) when schedule == %{}, do: :no_specified
+  defp get_next_manager(schedule) do
+    startDate = Date.add(get_start_date, 7)
+    result = Enum.find(schedule, fn({k, {_, date}}) -> Date.compare(startDate, date) == :eq end)
+    case result do
+      nil      -> :no_specified
+      {user,_} -> user
+    end
+
+  end
+
+  defp get_start_date( date \\ Date.utc_today) do
+
+    case Date.day_of_week(date) do
+       1     -> date
+       value -> Date.add(date, -(value-1))
+    end
   end
 
 end
