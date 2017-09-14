@@ -4,6 +4,8 @@ defmodule Bot.DiswasherManager do
 
   @boss    Application.fetch_env!(:slack, :diswasher_duties_owner)
   @channel Application.fetch_env!(:slack, :diswasher_duties_channel)
+  @private_channel  :dishwasher_app
+  @channels [@channel, @private_channel ]
 
   # The message "swap_with @x" is used to swap weekly duties with the user  `x`.
   def on_message(<<"swap_with"::utf8, user::bitstring>>, _channel, sender)  do
@@ -39,24 +41,24 @@ defmodule Bot.DiswasherManager do
 
   # Prints out all the outstanding orders.
   # Restricted to admins only.
-  def on_message(<<"schedule"::utf8, _::bitstring>>, _channel, _sender) do
+  def on_message(<<"schedule"::utf8, _::bitstring>>, channel, _sender) when channel in @channels do
     {:ok, schedule} = Brain.DishwasherManager.schedule()
     build_schedule_list(schedule)
   end
 
   # Prints out all the outstanding orders.
   # Restricted to admins only.
-  def on_message(<<"create_schedule"::utf8, startDate::bitstring>>, _channel, @boss) do
+  def on_message(<<"create_schedule"::utf8, startDate::bitstring>>, channel, @boss) when channel in @channels  do
     {:ok, schedule} = Brain.DishwasherManager.create_schedule(startDate)
     build_schedule_list(schedule)
   end
 
-  def on_message(<<"users"::utf8, _::bitstring>>, _channel, @boss) do
+  def on_message(<<"users"::utf8, _::bitstring>>, channel, @boss) when channel in @channels  do
     {:ok, users} = Brain.DishwasherManager.users()
     build_user_list(users)
   end
 
-  def on_message(<<"add_user"::utf8, userDetails::bitstring>>, _channel, @boss) do
+  def on_message(<<"add_user"::utf8, userDetails::bitstring>>, channel, @boss) when channel in @channels do
      case String.split(userDetails) do
       []          -> {:noreply}
       [user| fullname] -> :ok  = Brain.DishwasherManager.add_user(user, fullname)
@@ -64,22 +66,22 @@ defmodule Bot.DiswasherManager do
     end
   end
 
-  def on_message(<<"remove_user"::utf8, user::bitstring>>, _channel, @boss) do
+  def on_message(<<"remove_user"::utf8, user::bitstring>>, channel, @boss) when channel in @channels do
     :ok  = Brain.DishwasherManager.remove_user(user)
     {:ok, "The user #{user} has been removed."}
   end
 
-  def on_message(<<"remove_users"::utf8>>, _channel, @boss) do
+  def on_message(<<"remove_users"::utf8>>, channel, @boss) when channel in @channels do
     :ok  = Brain.DishwasherManager.remove_users()
     {:ok, "The user list was removed."}
   end
 
-  def on_message(<<"remove_schedule"::utf8>>, _channel, @boss) do
+  def on_message(<<"remove_schedule"::utf8>>, channel, @boss) when channel in @channels do
     :ok  = Brain.DishwasherManager.remove_schedule()
     {:ok, "The schedule was removed."}
   end
 
-  def on_message(<<"set_manager"::utf8>>, _channel, @boss) do
+  def on_message(<<"set_manager"::utf8>>, channel, @boss) when channel in @channels do
     {:ok, manager}  = Brain.DishwasherManager.set_manager_of_the_week()
     case manager do
       :no_specified -> {:ok, "The schedule has not been created. Use the command 'help' for more information."}
@@ -87,65 +89,30 @@ defmodule Bot.DiswasherManager do
     end
   end
 
-  def on_message(<<"wave"::utf8>>, :dishwasher_app, _sender) do
+  def on_message(<<"wave"::utf8>>, channel, _sender) when channel in @channels do
     wave_dishwasher_manager()
   end
 
-  def on_message(<<"wave"::utf8>>, :channel, _sender) do
-    wave_dishwasher_manager()
-  end
-
-  def on_message(<<":wave:"::utf8>>, :dishwasher_app, _sender) do
-    wave_dishwasher_manager()
-  end
-
-
-  def on_message(<<":wave:"::utf8>>, :channel, _sender) do
+  def on_message(<<":wave:"::utf8>>, channel, _sender) when channel in @channels do
     wave_dishwasher_manager()
   end
 
   # Prints out help message.
-  def on_message(<<"help"::utf8>>, @channel, @boss) do
+  def on_message(<<"help"::utf8>>, channel, @boss) when channel in @channels do
     res = boss_help_menu()
     {:ok, res}
   end
 
   # Prints out help message.
-  def on_message(<<"help"::utf8>>, @channel, _sender) do
+  def on_message(<<"help"::utf8>>, channel, _sender)  when channel in @channels do
     res = user_help_menu()
     {:ok, res}
   end
-
-  # Prints out help message.
-  def on_message(<<"help"::utf8>>, :dishwasher_app, @boss) do
-    res = boss_help_menu()
-    {:ok, res}
-  end
-
-  def on_message(<<"help"::utf8>>, :dishwasher_app, _sender) do
-    res = user_help_menu()
-    {:ok, res}
-  end
-
-
-#  def on_message(_text, @channel, _sender) do
-#     {:ok, general_msg()}
-#  end
-#
-#  def on_message(_text, :dishwasher_app, _sender) do
-#     {:ok, general_msg()}
-#  end
 
   def on_message(_text, _channel, _sender) do
     {:noreply}
   end
 
-
-#  defp general_msg do
-#    """
-#    Hello Softie! Please use the command `help` for more information.
-#    """
-#  end
 
   defp build_schedule_list(schedule) when schedule == %{}  , do: {:ok, "There is no schedule ready. Use the command 'help' for more information."}
 
