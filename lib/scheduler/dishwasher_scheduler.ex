@@ -5,7 +5,11 @@ defmodule Scheduler.DishwasherScheduler do
 
   require Logger
 
-  every :monday, at: "09:00" do
+  every :monday, at: "07:00" do
+    Brain.DishwasherManager.set_manager_of_the_week()
+  end
+
+  every :monday, at: "08:00" do
     msg = "Good morning! Enjoy your week as dishwasher manager and don't forget your duties."
     send_notification(msg)
   end
@@ -33,7 +37,7 @@ defmodule Scheduler.DishwasherScheduler do
     send_notification(msg)
   end
 
-  every :thursday, at: "10:00" do
+  every :thursday, at: "14:00" do
     msg = """
           Hello! Next week you will our Dishwasher Managger :tada:
           If you will be out next week please change your turn with another person using the `swap_with` command.

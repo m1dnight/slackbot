@@ -160,6 +160,8 @@ defmodule Bot.DiswasherManager do
   defp build_schedule_list(schedule) when schedule == %{}  , do: {:ok, "There is no schedule ready. Use the command 'help' for more information."}
 
   defp build_schedule_list(schedule) do
+    IO.puts "sdfsdf-->"
+    IO.inspect schedule
     resp = schedule
            |> Enum.map(fn {_k,{fullname, from}} ->
                 "- #{fullname} -> from: #{from} to: #{Date.add(from, 4)}" end)
@@ -187,7 +189,7 @@ defmodule Bot.DiswasherManager do
                           Example: "manager?"
     schedule            : Shows the current dishwasher schedule.
                           Example: "schedule"
-    wave                : Sends a notification to the current diswasher manager.
+    wave                : Sends a notification to the current diswasher manager in case he has to do his duties.
                           Example: "wave"  or  ":wave:"
     when?               : Shows the dates of your the next diswasher duties.
                           Example: "when? "
