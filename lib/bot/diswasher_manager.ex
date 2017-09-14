@@ -21,7 +21,7 @@ defmodule Bot.DiswasherManager do
 
     case manager do
        :no_specified -> {:ok, "The schedule has not been created. Use the command 'help' for more information."}
-       name          -> {:ok, "The current dishwasher manager is `#{fullname}`"}
+       _name          -> {:ok, "The current dishwasher manager is `#{fullname}`"}
     end
   end
 
@@ -102,16 +102,6 @@ defmodule Bot.DiswasherManager do
 
   def on_message(<<":wave:"::utf8>>, :channel, _sender) do
     wave_dishwasher_manager()
-  end
-
-  defp wave_dishwasher_manager do
-    {:ok, manager, fullname} = Brain.DishwasherManager.manager?()
-
-    case manager do
-      :no_specified -> {:ok, "As the schedule has not been created, there is not Dishwasher Manager."}
-      name          -> SlackManager.send_private_message(":wave: Hey Dishwasher Manager! Please do your dishwasher duties as soon as you can.", manager)
-                       {:ok, "The current dishwasher manager `#{fullname}` was :wave:"}
-    end
   end
 
   # Prints out help message.
@@ -220,6 +210,18 @@ defmodule Bot.DiswasherManager do
 
     """
   end
+
+
+  defp wave_dishwasher_manager do
+    {:ok, manager, fullname} = Brain.DishwasherManager.manager?()
+
+    case manager do
+      :no_specified -> {:ok, "As the schedule has not been created, there is not Dishwasher Manager."}
+      _name          -> SlackManager.send_private_message(":wave: Hey Dishwasher Manager! Please do your dishwasher duties as soon as you can.", manager)
+                       {:ok, "The current dishwasher manager `#{fullname}` was :wave:"}
+    end
+  end
+
 
 
 end

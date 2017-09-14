@@ -115,7 +115,7 @@ defmodule Brain.DishwasherManager do
         :no_specified -> sch = build_schedule(users, Date.utc_today)
                          man = get_manager_of_week(sch)
                          {sch, man}
-              manager -> {schedule, manager}
+                 user -> {schedule, user}
     end
     fullName = Keyword.get(users, manager, :no_specified)
     {:reply, {:ok, fullName}, {schedule, users, manager}}
@@ -163,7 +163,7 @@ defmodule Brain.DishwasherManager do
   end
 
   def handle_call({:swap, _userA, _userB}, _from, {[], users, manager}) do
-    {:reply, {:error, "There is no schedule ready. Use the command 'help' for more information."}, {schedule, users, manager}}
+    {:reply, {:error, "There is no schedule ready. Use the command 'help' for more information."}, {[], users, manager}}
   end
 
   def handle_call({:swap, userA, userB}, _from, {schedule, users, manager}) do
@@ -245,7 +245,7 @@ defmodule Brain.DishwasherManager do
   defp add_to_schedule([] = schedule, _user, _fullName), do: schedule
 
   defp add_to_schedule(schedule, user, fullName) do
-    {_, {_, lastDate}} = Enum.max_by(schedule, fn({u, {f, date}}) -> date end)
+    {_, {_, lastDate}} = Enum.max_by(schedule, fn({_, {_, date}}) -> date end)
     Keyword.put(schedule, user, {fullName, get_next_valid_date(Date.add(lastDate, 7))})
   end
 
@@ -278,7 +278,7 @@ defmodule Brain.DishwasherManager do
   defp get_manager_of_week([]), do: :no_specified
   defp get_manager_of_week(schedule) do
     startDate = get_start_date()
-    result = Enum.find(schedule, fn({k, {_, date}}) -> Date.compare(startDate, date) == :eq end)
+    result = Enum.find(schedule, fn({_, {_, date}}) -> Date.compare(startDate, date) == :eq end)
     case result do
       nil      -> :no_specified
       {user,_} -> user
@@ -289,7 +289,7 @@ defmodule Brain.DishwasherManager do
   defp get_next_manager([]), do: :no_specified
   defp get_next_manager(schedule) do
     startDate = Date.add(get_start_date(), 7)
-    result = Enum.find(schedule, fn({k, {_, date}}) -> Date.compare(startDate, date) == :eq end)
+    result = Enum.find(schedule, fn({_, {_, date}}) -> Date.compare(startDate, date) == :eq end)
     case result do
       nil      -> :no_specified
       {user,_} -> user
