@@ -38,7 +38,7 @@ defmodule Brain.DishwasherManager do
     GenServer.call __MODULE__, :manager?
   end
 
-  defp next_manager do
+  def next_manager do
     GenServer.call __MODULE__, :next_manager
   end
 
@@ -288,7 +288,7 @@ defmodule Brain.DishwasherManager do
 
   defp get_next_manager([]), do: :no_specified
   defp get_next_manager(schedule) do
-    startDate = Date.add(get_start_date, 7)
+    startDate = Date.add(get_start_date(), 7)
     result = Enum.find(schedule, fn({k, {_, date}}) -> Date.compare(startDate, date) == :eq end)
     case result do
       nil      -> :no_specified

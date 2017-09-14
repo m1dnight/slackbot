@@ -43,7 +43,7 @@ defmodule Scheduler.DishwasherScheduler do
           If you will be out next week please change your turn with another person using the `swap_with` command.
           e.g. `swap_with @cdetroye`
           """
-    {:ok, manager} = Brain.DishwasherManager.get_next_manager()
+    {:ok, manager} = Brain.DishwasherManager.next_manager()
     SlackManager.send_private_message(msg, manager)
   end
 
