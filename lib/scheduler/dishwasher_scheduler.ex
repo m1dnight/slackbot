@@ -39,7 +39,7 @@ defmodule Scheduler.DishwasherScheduler do
 
   every :thursday, at: "14:00" do
     msg = """
-          Hello! Next week you will be our Dishwasher Managger :tada:
+          Hello! Next week you will be our Dishwasher Manager :tada:
           If you will be out next week please change your turn with another person using the `swap_with` command.
           e.g. `swap_with @cdetroye`
           """
