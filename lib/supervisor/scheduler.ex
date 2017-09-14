@@ -1,4 +1,6 @@
-defmodule Supervisor.Brain do
+defmodule Supervisor.Scheduler do
+  @moduledoc false
+
   use Supervisor
 
   def start_link(state \\ []) do
@@ -7,9 +9,7 @@ defmodule Supervisor.Brain do
 
   def init(_state) do
     children = [
-      worker(Brain.Karma, []),
-      worker(Brain.Benvolios, []),
-      worker(Brain.DishwasherManager, [])
+      worker(Scheduler.DishwasherScheduler, [])
     ]
     supervise children, strategy: :one_for_one
   end

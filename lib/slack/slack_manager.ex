@@ -57,6 +57,14 @@ defmodule SlackManager do
     {:noreply, state}
   end
 
+  @doc """
+  Sends a message over Slack to the given user.
+  """
+  def handle_cast({:send_private_msg, msg, user}, state) do
+    send(state.client, {:send_private_msg, msg, user})
+    {:noreply, state}
+  end
+
   #########
   # Calls #
   #########
@@ -188,5 +196,9 @@ defmodule SlackManager do
 
   def send_message(m, channel) do
     GenServer.cast(SlackManager, {:send_msg, m, channel})
+  end
+
+  def send_private_message(m, user) do
+    GenServer.cast(SlackManager, {:send_private_msg, m, user})
   end
 end

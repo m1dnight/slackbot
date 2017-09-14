@@ -4,7 +4,7 @@ defmodule Slackbot.Mixfile do
   def project do
     [app: Slackbot,
      version: "0.0.1",
-     elixir: "~> 1.4",
+     elixir: "~> 1.5",
      deps: deps()]
   end
 
@@ -26,12 +26,13 @@ defmodule Slackbot.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    [{:exgenius,      "~> 0.0.2"},
+    [
      {:slack,         "~> 0.12.0"},
-     {:poison,        "~> 3.0"},
-     {:timex,         "~> 3.1.7"},
-     {:feeder_ex,     "~> 1.0"},
-     {:html_entities, "~> 0.3"}
+     {:poison,        "~> 3.1.0"},
+     {:timex,         "~> 3.1.24"},
+     {:feeder_ex,     "~> 1.1"},
+     {:html_entities, "~> 0.4.0"},
+     {:cronex,        git: "https://github.com/rhumbertgz/cronex.git"}
    ]
   end
 end

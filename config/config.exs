@@ -6,4 +6,7 @@ config :logger,
   handle_otp_reports: true,
   handle_sasl_reports: true
 
+config :cronex,
+       timezone: "Europe/Copenhagen"
+
 import_config "#{Mix.env}.secret.exs"

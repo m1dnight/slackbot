@@ -56,7 +56,7 @@ defmodule Bot.Benvolios do
   end
 
   # Prints out help message.
-  def on_message(<<"help"::utf8>>, _channel, _sender) do
+  def on_message(<<"help"::utf8>>, @channel, _sender) do
     res = """
     ```
     order        : Order something.
