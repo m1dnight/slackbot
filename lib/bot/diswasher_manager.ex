@@ -160,8 +160,6 @@ defmodule Bot.DiswasherManager do
   defp build_schedule_list(schedule) when schedule == %{}  , do: {:ok, "There is no schedule ready. Use the command 'help' for more information."}
 
   defp build_schedule_list(schedule) do
-    IO.puts "sdfsdf-->"
-    IO.inspect schedule
     resp = schedule
            |> Enum.map(fn {_k,{fullname, from}} ->
                 "- #{fullname} -> from: #{from} to: #{Date.add(from, 4)}" end)
