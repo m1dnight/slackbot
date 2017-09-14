@@ -75,7 +75,7 @@ defmodule SlackManager do
   """
   def handle_call({:dealias, m}, _from, state) do
     dealiased = ~r/\<@([a-zA-Z0-9]+)\>/
-                |> Regex.replace(m,
+    |> Regex.replace(m,
                      fn _, x ->
                        {:ok, username} = dealias_userhash("#{x}", state)
                        username
