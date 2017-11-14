@@ -52,7 +52,7 @@ defmodule Bot.Benvolios do
   # Restricted to admins only.
   def on_message(<<"clear orders"::utf8, _::bitstring>>, @channel, @boss) do
     :ok = Brain.Benvolios.clear()
-    {:noreply}
+    {:ok, "List cleared, no orders yet.."}
   end
 
   # Prints out help message.
