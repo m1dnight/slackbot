@@ -5,10 +5,13 @@ defmodule Bot.Resto do
 
   def on_message(<<"fret"::utf8, _::bitstring>>, _channel, _from) do
     menu = get_menu()
-    msg = case menu do
-      :nil -> "Geen fret vandaag. Opinio is misschien open."
-      _    -> menu
-    end
+
+    msg =
+      case menu do
+        nil -> "Geen fret vandaag. Opinio is misschien open."
+        _ -> menu
+      end
+
     {:ok, "#{msg}"}
   end
 
@@ -32,7 +35,7 @@ defmodule Bot.Resto do
 
   # Grabs the JSON data from the web, and parses it into a map.
   defp get_data() do
-    {:ok, {{_, 200, 'OK'}, _, body}} = :httpc.request(:get, {@url, []}, [], [body_format: :binary])
+    {:ok, {{_, 200, 'OK'}, _, body}} = :httpc.request(:get, {@url, []}, [], body_format: :binary)
     {:ok, menus} = Poison.decode(body)
     menus
   end
@@ -41,7 +44,7 @@ defmodule Bot.Resto do
   # returns nil.
   defp extract_today(data) do
     data
-    |> Enum.find(fn(x) -> x["date"] == "#{Timex.today}" end)
+    |> Enum.find(fn x -> x["date"] == "#{Timex.today()}" end)
   end
 
   # Given a single map that contains all the menus for that day, returns a string
@@ -70,13 +73,13 @@ defmodule Bot.Resto do
   # Vis: Tongrolletjes met spinazie en Nantua saus - Veggie: Groentekrustie met
   # bloemkool in kaassaus - Pasta bar: Lasagne Bolognaise - Wok: Wintergroentewok
   # met volle rijst"
-  defp parse_menu(:nil) do
-    :nil
+  defp parse_menu(nil) do
+    nil
   end
 
   defp parse_menu(map) do
     map["menus"]
-    |> Enum.map(fn(m) -> "_*#{m["name"]}*_: #{m["dish"]}" end)
+    |> Enum.map(fn m -> "_*#{m["name"]}*_: #{m["dish"]}" end)
     |> Enum.join(" - ")
   end
 end

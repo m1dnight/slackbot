@@ -1,16 +1,19 @@
 defmodule Bot.Benvolios do
   use Plugin
 
-  @boss    Application.fetch_env!(:slack, :benvolios_owner)
+  @boss Application.fetch_env!(:slack, :benvolios_owner)
   @channel Application.fetch_env!(:slack, :benvolios_channel)
 
   # The message "order x y z" is used to order a sandwich. "x y z" will be
   # the order.
   def on_message(<<"order "::utf8, rest::bitstring>>, @channel, sender) do
     case String.split(rest) do
-      []          -> {:noreply}
-      [_subject|_] -> :ok = handle_order(sender, rest)
-                     {:ok,"#{sender} has ordered #{rest}"}
+      [] ->
+        {:noreply}
+
+      [_subject | _] ->
+        :ok = handle_order(sender, rest)
+        {:ok, "#{sender} has ordered #{rest}"}
     end
   end
 
@@ -24,8 +27,9 @@ defmodule Bot.Benvolios do
   # "order?" will print out the outstanding order of the sender, if any.
   def on_message(<<"order?"::utf8, _::bitstring>>, @channel, sender) do
     {:ok, order} = Brain.Benvolios.get_order(sender)
+
     case order do
-      :nil  -> {:ok, "No order registered for #{sender}"}
+      nil -> {:ok, "No order registered for #{sender}"}
       order -> {:ok, "You have ordered \"#{order}\""}
     end
   end
@@ -36,15 +40,20 @@ defmodule Bot.Benvolios do
     {:ok, orders} = Brain.Benvolios.list()
 
     case orders do
-      :nil   -> {:ok, "No orders yet.."}
-      orders -> if orders == %{} do
-                  {:ok, "No orders yet.."}
-                else
-                  res = orders
-                  |> Enum.map(fn {k,v} -> "#{k} : #{v}" end)
-                  |> Enum.join("\n")
-                  {:ok, "```#{res}```"}
-                end
+      nil ->
+        {:ok, "No orders yet.."}
+
+      orders ->
+        if orders == %{} do
+          {:ok, "No orders yet.."}
+        else
+          res =
+            orders
+            |> Enum.map(fn {k, v} -> "#{k} : #{v}" end)
+            |> Enum.join("\n")
+
+          {:ok, "```#{res}```"}
+        end
     end
   end
 
@@ -73,6 +82,7 @@ defmodule Bot.Benvolios do
     Ps: Only the admin can execute `list` and `clear orders`
 
     """
+
     {:ok, res}
   end
 
@@ -87,5 +97,4 @@ defmodule Bot.Benvolios do
   defp handle_order(orderer, order) do
     Brain.Benvolios.save_order(orderer, order)
   end
-
 end

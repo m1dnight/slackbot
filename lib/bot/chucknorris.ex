@@ -5,10 +5,14 @@ defmodule Bot.ChuckNorris do
 
   def on_message(<<"joke?"::utf8, _::bitstring>>, _channel, _from) do
     j = joke()
+
     case j do
-      {:error, e} -> IO.puts "Error getting joke #{e}"
-                     {:noreply}
-      {:ok, text} -> {:ok, "#{text}"}
+      {:error, e} ->
+        IO.puts("Error getting joke #{e}")
+        {:noreply}
+
+      {:ok, text} ->
+        {:ok, "#{text}"}
     end
   end
 
@@ -27,8 +31,7 @@ defmodule Bot.ChuckNorris do
     # Get the data from the webservcer.
     with {:ok, data} <- get_data(),
          {:ok, joke} <- extract_text(data),
-         decoded     <- HtmlEntities.decode(joke)
-    do
+         decoded <- HtmlEntities.decode(joke) do
       {:ok, decoded}
     else
       err -> {:error, err}
@@ -36,12 +39,14 @@ defmodule Bot.ChuckNorris do
   end
 
   defp get_data() do
-    {:ok, {{_, 200, 'OK'}, _, body}} = :httpc.request(:get, {@url, []}, [], [body_format: :binary])
-    Poison.decode(body) # = {:ok, joke}
+    {:ok, {{_, 200, 'OK'}, _, body}} = :httpc.request(:get, {@url, []}, [], body_format: :binary)
+    # = {:ok, joke}
+    Poison.decode(body)
   end
 
   defp extract_text(%{"value" => %{"joke" => text}}) do
     {:ok, text}
   end
+
   defp extract_text(_), do: {:error, "Can not parse response"}
 end

@@ -1,5 +1,4 @@
 defmodule Plugin do
-
   # Each Plugin should implement an on_message function.
   @callback on_message(message :: term, channel :: term, from :: term) :: any
 
@@ -11,11 +10,11 @@ defmodule Plugin do
       @behaviour Plugin
       use GenServer
 
-      #-------------------------------------------------------------------------
+      # -------------------------------------------------------------------------
       # Insert the GenServer interface methods.
 
       def init(args) do
-        SlackManager.add_handler self()
+        SlackManager.add_handler(self())
         initialize()
         {:ok, args}
       end
@@ -28,23 +27,25 @@ defmodule Plugin do
         reply = on_message(text, message.channel, from)
 
         case reply do
-          {:ok, reply}     ->
+          {:ok, reply} ->
             SlackManager.send_message("#{reply}", message.channel)
+
           {:error, reason} ->
-            IO.puts "Error in plugin #{reason}"
-          {:noreply}       ->
+            IO.puts("Error in plugin #{reason}")
+
+          {:noreply} ->
             :noop
         end
-        
+
         {:noreply, state}
       end
 
-      def handle_info(m,state) do
+      def handle_info(m, state) do
         {:noreply, state}
       end
 
       # End of GenServer interface methods.
-      #-------------------------------------------------------------------------
+      # -------------------------------------------------------------------------
 
       def initialize(), do: :ok
       defoverridable initialize: 0

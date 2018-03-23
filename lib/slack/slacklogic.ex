@@ -1,5 +1,4 @@
 defmodule SlackLogic do
-
   @moduledoc """
   This module provides functionalityy to the Slack API. It is the first module
   that touches incoming messages from Slack.
@@ -12,7 +11,7 @@ defmodule SlackLogic do
   This function is called whenever a connection to Slack is made.
   """
   def handle_connect(slack, state) do
-    Logger.debug "Connected as #{slack.me.name}"
+    Logger.debug("Connected as #{slack.me.name}")
     SlackManager.notify(:connected)
     {:ok, state}
   end
@@ -26,11 +25,11 @@ defmodule SlackLogic do
   which are in the form of some-sort of hashes.
   """
   def handle_event(message = %{type: "message", text: text, user: from}, slack, state) do
-    Logger.debug ">> #{text}"
-    {:ok, sender}    = SlackManager.dealias_userhash(from)
-    {:ok, m}         = SlackManager.dealias_message(text)
+    Logger.debug(">> #{text}")
+    {:ok, sender} = SlackManager.dealias_userhash(from)
+    {:ok, m} = SlackManager.dealias_message(text)
     {:ok, {_, chan}} = SlackManager.dehash_channel(message.channel)
-    message          = %{message | text: m, channel: chan, user: sender}
+    message = %{message | text: m, channel: chan, user: sender}
 
     # If this message has our name in it, we send a second notification.
     if String.contains?(message.text, slack.me.name) do
@@ -58,19 +57,18 @@ defmodule SlackLogic do
     {:ok, state}
   end
 
-
   @doc """
   Info's come from the outside. IT allows us to send messages to the Slack
   process.
   """
   def handle_info({:send_msg, text, channel}, slack, state) do
-  Logger.debug "<< #{channel}: #{text}"
+    Logger.debug("<< #{channel}: #{text}")
     {:ok, {channel_id, _}} = SlackManager.hash_channel(channel)
     send_message(text, channel_id, slack)
     {:ok, state}
   end
 
-  def handle_info(_,_, state) do
+  def handle_info(_, _, state) do
     {:ok, state}
   end
 end

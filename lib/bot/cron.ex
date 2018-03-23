@@ -27,6 +27,7 @@ defmodule Bot.Cronjob do
     schedule({:repeat, module, function, args, interval})
     {:noreply, state}
   end
+
   @doc """
   Executes the function just like repeat, but only does so once.
   """
