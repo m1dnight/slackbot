@@ -10,13 +10,14 @@ defmodule Supervisor.Connection do
 
     children = [
       # The actual Slack connection.
-      worker(Slack.Bot, [SlackLogic, [], slack_token, %{:name => Slack.Bot}]),
+      worker(Slack.Bot, [SlackLogic, [], slack_token, %{:name => Slack.Bot}], restart: :permanent),
       # The interface process to the Slack connection.
-      worker(SlackManager, [Slack.Bot, slack_token]),
+      worker(SlackManager, [Slack.Bot, slack_token], restart: :permanent),
       # The bot plugins.
-      worker(Supervisor.Bot, [[]])
+      worker(Supervisor.Bot, [[]], restart: :permanent)
     ]
 
-    supervise(children, strategy: :one_for_all)
+    opts = [strategy: :one_for_all, max_restarts: 1000, max_seconds: 1]
+    supervise(children, opts)
   end
 end
