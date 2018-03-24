@@ -7,13 +7,14 @@ defmodule Supervisor.Bot do
 
   def init(opts) do
     children = [
-      worker(Bot.Karma, [opts]),
-      worker(Bot.ChuckNorris, [opts]),
-      worker(Bot.Resto, [opts]),
-      worker(Bot.Cronjob, [opts]),
-      worker(Bot.Rss, [opts]),
-      worker(Bot.Benvolios, [opts]),
-      worker(Bot.Misc, [opts])
+      # worker(Bot.Karma, [opts]),
+      # worker(Bot.ChuckNorris, [opts]),
+      # worker(Bot.Resto, [opts]),
+      # worker(Bot.Cronjob, [opts]),
+      # worker(Bot.Rss, [opts]),
+      # worker(Bot.Benvolios, [opts]),
+      # worker(Bot.Misc, [opts])
+      worker(Slackbot.Plugin, [{Bot.Echo, %{}}])
     ]
 
     supervise(children, strategy: :one_for_one)
