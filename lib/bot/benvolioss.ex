@@ -2,7 +2,6 @@ defmodule Plugin.Benvolios do
   use Slackbot.Plugin
   require Logger
 
-
   @boss Application.fetch_env!(:slack, :benvolios_owner)
   @channel Application.fetch_env!(:slack, :benvolios_channel)
 
@@ -13,14 +12,18 @@ defmodule Plugin.Benvolios do
     # Compute all permutations of the first word in the string.
     # if it matches "order", turn it into "order".
     words = String.split(text)
-    perms = words |> hd |> String.to_charlist() |> shuffle() |> Enum.map(&String.Chars.to_string/1)
-    match? = Enum.any?(perms, &(String.equivalent?("order", &1)))
 
-    text = if match? do
-      (["order"] ++ (words |> tl)) |> Enum.join(" ")
-    else
-      text
-    end
+    perms =
+      words |> hd |> String.to_charlist() |> shuffle() |> Enum.map(&String.Chars.to_string/1)
+
+    match? = Enum.any?(perms, &String.equivalent?("order", &1))
+
+    text =
+      if match? do
+        (["order"] ++ (words |> tl)) |> Enum.join(" ")
+      else
+        text
+      end
 
     # # Lowercase all the message, for easy pattern matching.
     # fmt =
