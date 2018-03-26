@@ -12,11 +12,9 @@ defmodule Plugin.Benvolios do
     # Compute all permutations of the first word in the string.
     # if it matches "order", turn it into "order".
     words = String.split(text)
-
-    perms =
-      words |> hd |> String.to_charlist() |> shuffle() |> Enum.map(&String.Chars.to_string/1)
-
-    match? = Enum.any?(perms, &String.equivalent?("order", &1))
+    command = hd(words)
+    chars = String.to_charlist(command)
+    match? = ("order" |> String.to_charlist() |> Enum.sort) == (words |> hd |> String.to_charlist() |> Enum.sort())
 
     text =
       if match? do
@@ -140,16 +138,5 @@ defmodule Plugin.Benvolios do
 
   defp handle_order(orderer, order) do
     Brain.Benvolios.save_order(orderer, order)
-  end
-
-  # https://stackoverflow.com/questions/33756396/how-can-i-get-permutations-of-a-list
-  def shuffle(list), do: shuffle(list, length(list))
-  def shuffle([], _), do: [[]]
-  def shuffle(_, 0), do: [[]]
-
-  def shuffle(list, i) do
-    for x <- list,
-        y <- shuffle(list, i - 1),
-        do: [x | y]
   end
 end
