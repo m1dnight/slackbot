@@ -39,6 +39,12 @@ defmodule Slackbot.Plugin do
       end
 
       defoverridable on_message: 3
+
+      def hook_pre(msg) do
+        {:ok, msg}
+      end
+
+      defoverridable hook_pre: 1
     end
   end
 
@@ -105,17 +111,18 @@ defmodule Slackbot.Plugin do
   }
   """
   def handle_info(%{type: "message"} = m, state) do
-    resp = state.module.on_message(m.text, m.channel, m.user)
+    {:ok, hooked} = state.module.hook_pre(m)
+    resp = state.module.on_message(hooked.text, hooked.channel, hooked.user)
 
     case resp do
       {:noreply} ->
         :noop
 
       {:ok, reply} ->
-        SlackManager.send_message("#{reply}", m.channel)
+        SlackManager.send_message("#{reply}", hooked.channel)
 
       {:react, emoji} ->
-        SlackManager.react(m, emoji)
+        SlackManager.react(hooked, emoji)
 
       {:error, _reason} ->
         Logger.error("Error in plugin #{inspect(state.module)}")

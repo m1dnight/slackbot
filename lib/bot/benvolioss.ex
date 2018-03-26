@@ -5,6 +5,16 @@ defmodule Plugin.Benvolios do
   @boss Application.fetch_env!(:slack, :benvolios_owner)
   @channel Application.fetch_env!(:slack, :benvolios_channel)
 
+  def hook_pre(msg) do
+    fmt =
+    if Map.has_key?(msg, :text) do
+      %{msg | text: String.downcase(msg.text)}
+    else
+      msg
+    end
+    {:ok, fmt}
+  end
+
   # The message "order x y z" is used to order a sandwich. "x y z" will be
   # the order.
   def on_message(<<"order "::utf8, rest::bitstring>>, @channel, sender) do
