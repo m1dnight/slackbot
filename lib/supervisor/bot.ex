@@ -14,7 +14,8 @@ defmodule Supervisor.Bot do
       # worker(Bot.Rss, [opts]),
       # worker(Bot.Benvolios, [opts]),
       # worker(Bot.Misc, [opts])
-      worker(Slackbot.Plugin, [{Bot.Echo, %{}}])
+      worker(Slackbot.Plugin, [{Bot.Echo, %{}}]),
+      worker(Slackbot.Plugin, [{Plugin.Benvolios, %{}}], id: :foo)
     ]
 
     supervise(children, strategy: :one_for_one)

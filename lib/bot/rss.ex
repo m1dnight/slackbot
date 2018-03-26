@@ -20,7 +20,7 @@ defmodule Bot.Rss do
 
   # Takes in a feed and checks for new entries and sends them to the Slack.
   def process_feed(feed) do
-    Logger.debug("RSS update: #{feed}")
+    Logger.info("RSS update: #{feed}")
 
     feed
     |> get_bookmark()

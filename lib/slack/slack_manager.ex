@@ -57,6 +57,17 @@ defmodule SlackManager do
     {:noreply, state}
   end
 
+  @doc """
+  Reacts with the given emoji to the given message.
+  """
+  def handle_cast({:react, msg, emoji}, state) do
+    timestamp = msg.ts
+    {channel, _name} = hash_channel(msg.channel, state)
+    token = state.token
+    Slack.Web.Reactions.add(emoji, %{timestamp: timestamp, token: token, channel: channel})
+    {:noreply, state}
+  end
+
   #########
   # Calls #
   #########
@@ -196,5 +207,9 @@ defmodule SlackManager do
 
   def send_message(m, channel) do
     GenServer.cast(SlackManager, {:send_msg, m, channel})
+  end
+
+  def react(m, emoji) do
+    GenServer.cast(SlackManager, {:react, m, emoji})
   end
 end

@@ -25,7 +25,8 @@ defmodule SlackLogic do
   which are in the form of some-sort of hashes.
   """
   def handle_event(message = %{type: "message", text: text, user: from}, slack, state) do
-    Logger.debug(">> #{text}")
+    Logger.debug("#{inspect(message)}")
+    Logger.info(">> #{text}")
     {:ok, sender} = SlackManager.dealias_userhash(from)
     {:ok, m} = SlackManager.dealias_message(text)
     {:ok, {_, chan}} = SlackManager.dehash_channel(message.channel)
@@ -45,6 +46,7 @@ defmodule SlackLogic do
   A catch-all function for events which we forward to all subscribers.
   """
   def handle_event(event, _, state) do
+    Logger.debug("#{__MODULE__} event: #{inspect(event)}")
     SlackManager.notify(event)
     {:ok, state}
   end
@@ -62,13 +64,14 @@ defmodule SlackLogic do
   process.
   """
   def handle_info({:send_msg, text, channel}, slack, state) do
-    Logger.debug("<< #{channel}: #{text}")
+    Logger.info("<< #{channel}: #{text}")
     {:ok, {channel_id, _}} = SlackManager.hash_channel(channel)
     send_message(text, channel_id, slack)
     {:ok, state}
   end
 
-  def handle_info(_, _, state) do
+  def handle_info(m, _, state) do
+    Logger.debug("#{__MODULE__} info: #{inspect(m)}")
     {:ok, state}
   end
 end

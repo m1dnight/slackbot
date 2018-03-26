@@ -7,14 +7,17 @@ defmodule Brain.Benvolios do
   end
 
   def init([[]]) do
-    Logger.debug("No orders provided. Reading from disk.")
+    Logger.info("#{__MODULE__} : No orders provided. Reading from disk.")
 
     case read_orders() do
       {:ok, state} ->
         {:ok, state}
 
       _ ->
-        Logger.warn("No initial orders and can't read backup, starting with empty order.")
+        Logger.warn(
+          "#{__MODULE__} : No initial orders and can't read backup, starting with empty order."
+        )
+
         {:ok, %{}}
     end
   end
@@ -62,21 +65,21 @@ defmodule Brain.Benvolios do
   end
 
   def handle_call({:forget_order, orderer}, _from, state) do
-    Logger.debug("Forgetting order for #{orderer}")
+    Logger.info("#{__MODULE__} : Forgetting order for #{orderer}")
     new_state = Map.delete(state, orderer)
     save_orders(new_state)
     {:reply, :ok, new_state}
   end
 
   def handle_call({:order, orderer, order}, _from, state) do
-    Logger.debug("Remembering order #{orderer} - #{order}")
+    Logger.debug("#{__MODULE__} : Remembering order #{orderer} - #{order}")
     new_state = Map.put(state, orderer, order)
     save_orders(new_state)
     {:reply, :ok, new_state}
   end
 
   def handle_call(:clear, _from, _state) do
-    Logger.debug("Clearing orders")
+    Logger.debug("#{__MODULE__} : Clearing orders")
     new_state = %{}
     save_orders(new_state)
     {:reply, :ok, new_state}

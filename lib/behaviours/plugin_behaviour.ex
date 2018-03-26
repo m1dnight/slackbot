@@ -28,16 +28,13 @@ defmodule Slackbot.Plugin do
       require Logger
 
       def init(s) do
-        Logger.debug "Plugin initialized with #{inspect s}"
         {:ok, s}
       end
 
       defoverridable init: 1
 
       def on_message(msg, chan, from) do
-        Logger.debug(
-          "#{__MODULE__} got message: #{inspect(msg)} from #{inspect(from)} in channel #{chan}"
-        )
+        Logger.debug("#{__MODULE__} << #{inspect(msg)}")
         {:noreply}
       end
 
@@ -71,7 +68,6 @@ defmodule Slackbot.Plugin do
   by the programmer.
   """
   def init({mod, args}) do
-    Logger.debug("Starting plugin #{inspect(mod)} starting")
     # We want to receive messages in this process.
     SlackManager.add_handler(self())
 
@@ -89,16 +85,10 @@ defmodule Slackbot.Plugin do
   #######################
 
   def handle_call(m, from, state) do
-    Logger.debug(
-      "Call #{inspect(m)} from #{inspect(from)} with state #{inspect(state)}",
-      ansi_color: :purple
-    )
-
     {:reply, :response, state}
   end
 
   def handle_cast(m, state) do
-    Logger.debug("Cast #{inspect(m)} with state #{inspect(state)}", ansi_color: :yellow)
     {:noreply, state}
   end
 
@@ -116,20 +106,25 @@ defmodule Slackbot.Plugin do
   """
   def handle_info(%{type: "message"} = m, state) do
     resp = state.module.on_message(m.text, m.channel, m.user)
+
     case resp do
       {:noreply} ->
         :noop
+
       {:ok, reply} ->
         SlackManager.send_message("#{reply}", m.channel)
+
+      {:react, emoji} ->
+        SlackManager.react(m, emoji)
+
       {:error, _reason} ->
-        Logger.error "Error in plugin #{inspect state.module}"
+        Logger.error("Error in plugin #{inspect(state.module)}")
     end
 
     {:noreply, state}
   end
 
   def handle_info(m, state) do
-    Logger.debug("Info \"#{inspect(m)}\" with state #{inspect(state)}", ansi_color: :green)
     {:noreply, state}
   end
 
