@@ -27,10 +27,10 @@ defmodule Slackbot.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     [
-     {:slack,         "~> 0.12.0"},
+     {:slack,         "~> 0.13.0"},
      {:poison,        "~> 3.1.0"},
-     {:timex,         "~> 3.1.24"},
-     {:feeder_ex,     "~> 1.1"},
+     {:timex,         "~> 3.2.1"},
+     {:feeder_ex,     "~> 1.1.0"},
      {:html_entities, "~> 0.4.0"},
      {:cronex,        git: "https://github.com/rhumbertgz/cronex.git"}
    ]
