@@ -37,7 +37,7 @@ defmodule Scheduler.DishwasherScheduler do
     send_notification(msg)
   end
 
-  every :thursday, at: "14:00" do
+  every :wednesday, at: "10:00" do
     msg = """
           Hello! Next week you will be our Dishwasher Manager :tada:
           If you will be out next week please change your turn with another person using the `swap_with` command.
@@ -48,7 +48,7 @@ defmodule Scheduler.DishwasherScheduler do
   end
 
   defp send_notification(msg) do
-    {:ok, manager} = Brain.DishwasherManager.manager?()
+    {:ok, manager, _} = Brain.DishwasherManager.manager?()
     SlackManager.send_private_message(msg, manager)
   end
 

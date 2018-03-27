@@ -129,7 +129,7 @@ defmodule Bot.DiswasherManager do
 
   defp build_user_list(users) do
     resp = users
-           |> Enum.map(fn {user, fullname} -> "- #{fullname} (@#{user})" end)
+           |> Enum.map(fn {_, fullname} -> "- #{fullname}" end)
            |> Enum.join("\n")
 
     {:ok, "```#{resp}```"}
@@ -144,9 +144,9 @@ defmodule Bot.DiswasherManager do
                           Example: "manager?"
     schedule            : Shows the current dishwasher schedule.
                           Example: "schedule"
-    wave                : Sends a notification to the current diswasher manager in case he has to do his duties.
+    wave                : Sends a notification to the current dishwasher manager in case he has to do his duties.
                           Example: "wave"  or  ":wave:"
-    when?               : Shows the dates of your the next diswasher duties.
+    when?               : Shows the dates of your the next dishwasher duties.
                           Example: "when? "
     ```
 

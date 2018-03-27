@@ -3,6 +3,7 @@ defmodule Brain.DishwasherManager do
   use GenServer
 
   @users_file "data/dishwasher_manager/users.dat"
+  @users_map_file "data/dishwasher_manager/users-map.dat"
   @schedule_file "data/dishwasher_manager/schedule.dat"
   @holidays [~D[2017-12-25], ~D[2018-01-01] ]
 
@@ -11,13 +12,13 @@ defmodule Brain.DishwasherManager do
   end
 
   def init([[]]) do
-    Logger.debug "No orders provided. Reading from disk."
+    Logger.debug "No state provided. Reading from disk."
     case restore_state() do
       {:ok, state} ->
         {:ok, state}
       _ ->
-        Logger.warn "No initial orders and can't read backup, starting with empty order."
-        {:ok, {%{}, %{}, :no_specified}}
+        Logger.warn "No initial state was restored from backup."
+        {:ok, {%{}, %{}, %{}, :no_specified}}
     end
   end
 
@@ -83,33 +84,34 @@ defmodule Brain.DishwasherManager do
   # Calls #
   #########
 
-  def handle_call(:users, _from, {_, users, _} = state) do
+  def handle_call(:users, _from, {_, users, _, _,_} = state) do
     {:reply, {:ok, users}, state}
   end
 
-  def handle_call(:manager?, _from, {_, users, manager} = state) do
+  def handle_call(:manager?, _from, {_, users, idNameMap, _, manager} = state) do
     fullName = Keyword.get(users, manager, :no_specified)
-    {:reply, {:ok, Atom.to_string(manager), fullName}, state}
+    user = Map.get(idNameMap, Atom.to_string(manager))
+    {:reply, {:ok, user, fullName}, state}
   end
 
-  def handle_call(:next_manager, _from, {schedule, users, _} = state) do
+  def handle_call(:next_manager, _from, {schedule, users, idNameMap, _, _} = state) do
     manager =
       case get_next_manager(schedule) do
         :no_specified -> {user, _} = List.first users
                           user
                  user -> user
       end
-
-    {:reply, {:ok, Atom.to_string(manager)}, state}
+    {:reply, {:ok, Map.get(idNameMap, Atom.to_string(manager))}, state}
   end
 
-  def handle_call({:when?, user}, _from, {schedule, _, _} = state) do
-    {fullName, startDate} = Keyword.get(schedule, String.to_atom(user), {:invalid_user, :no_specified})
+  def handle_call({:when?, user}, _from, {schedule, _, _, nameIdMap, _} = state) do
+    userId = Map.get(nameIdMap, user) |> String.to_atom
+    {fullName, startDate} = Keyword.get(schedule, userId, {:invalid_user, :no_specified})
     {:reply, {:ok, fullName, startDate}, state}
   end
 
 
-  def handle_call(:set_manager_of_the_week, _from, {schedule, users, _} ) do
+  def handle_call(:set_manager_of_the_week, _from, {schedule, users, idNameMap, nameIdMap, _} ) do
     {schedule, manager} =
       case get_manager_of_week(schedule) do
         :no_specified -> sch = build_schedule(users, Date.utc_today)
@@ -117,15 +119,16 @@ defmodule Brain.DishwasherManager do
                          {sch, man}
                  user -> {schedule, user}
     end
+
     fullName = Keyword.get(users, manager, :no_specified)
-    {:reply, {:ok, fullName}, {schedule, users, manager}}
+    {:reply, {:ok, fullName}, {schedule, users, idNameMap, nameIdMap, manager}}
   end
 
-  def handle_call(:schedule, _from, {schedule, _,_} = state) do
+  def handle_call(:schedule, _from, {schedule, _,_,_,_} = state) do
     {:reply, {:ok, schedule}, state}
   end
 
-  def handle_call({:create_schedule, startDate}, _from, {_, users, _}) do
+  def handle_call({:create_schedule, startDate}, _from, {_, users, idNameMap, nameIdMap, _}) do
 
     {:ok, startDate} = startDate
                        |> String.trim()
@@ -134,74 +137,79 @@ defmodule Brain.DishwasherManager do
     schedule = build_schedule(users, startDate)
     save_state(schedule, @schedule_file)
     manager = get_manager_of_week(schedule)
-    {:reply, {:ok, schedule}, {schedule, users, manager}}
+    {:reply, {:ok, schedule}, {schedule, users, idNameMap, nameIdMap, manager}}
   end
 
-  def handle_call({:add_user, user, fullname}, _from,  {schedule, users, manager}) do
+  def handle_call({:add_user, user, fullname}, _from,  {schedule, users, idNameMap, nameIdMap, manager}) do
     fullname = buildFullName(fullname)
     user = user
            |> String.trim()
-           |> String.to_atom()
+          #  |> String.to_atom()
 
-    users = Keyword.put_new(users, user, fullname)
-    schedule = add_to_schedule(schedule, user, fullname)
+    userId = Map.get(nameIdMap, user)
+    users = Keyword.put_new(users, userId, fullname)
+    schedule = add_to_schedule(schedule, userId, fullname)
     save_state(schedule, @schedule_file)
     save_state(users, @users_file)
-    {:reply, :ok, {schedule, users, manager}}
+    {:reply, :ok, {schedule, users, idNameMap, nameIdMap, manager}}
   end
 
 
-  def handle_call({:remove_user, user}, _from, {schedule, users, manager}) do
+  def handle_call({:remove_user, user}, _from, {schedule, users, idNameMap, nameIdMap, manager}) do
     user = user
            |> String.trim()
-           |> String.to_atom()
+          #  |> String.to_atom()
 
-    userList = Keyword.delete(users, user)
+    userId = Map.get(nameIdMap, user)
+    userList = Keyword.delete(users, userId)
     save_state(userList, @users_file)
 
-    {:reply, :ok, {schedule, userList, manager}}
+    {:reply, :ok, {schedule, userList, idNameMap, nameIdMap, manager}}
   end
 
-  def handle_call({:swap, _userA, _userB}, _from, {[], users, manager}) do
-    {:reply, {:error, "There is no schedule ready. Use the command 'help' for more information."}, {[], users, manager}}
+  def handle_call({:swap, _userA, _userB}, _from, {[], _, _, _, _} = state) do
+    {:reply, {:error, "There is no schedule ready. Use the command 'help' for more information."}, state}
   end
 
-  def handle_call({:swap, userA, userB}, _from, {schedule, users, manager}) do
+  def handle_call({:swap, userA, userB}, _from, {schedule, users, idNameMap, nameIdMap, manager}) do
     userA = userA
            |> String.trim()
-           |> String.to_atom()
+          #  |> String.to_atom()
 
     userB = userB
             |> String.trim()
-            |> String.to_atom()
+            # |> String.to_atom()
 
-    case validate_user_names([userA, userB], users) do
+    userIdA = Map.get(nameIdMap, userA) |> String.to_atom
+    userIdB = Map.get(nameIdMap, userB) |> String.to_atom
+
+    case validate_user_ids([userIdA, userIdB], users) do
       true ->
-              {nameA, dateA} = Keyword.get(schedule, userA)
-              {nameB, dateB} = Keyword.get(schedule, userB)
+              {nameA, dateA} = Keyword.get(schedule, userIdA)
+              {nameB, dateB} = Keyword.get(schedule, userIdB)
 
               newSchedule = schedule
-                |> Keyword.replace!(userA, {nameA, dateB})
-                |> Keyword.replace!(userB, {nameB, dateA})
+                |> Keyword.replace!(userIdA, {nameA, dateB})
+                |> Keyword.replace!(userIdB, {nameB, dateA})
 
               save_state(newSchedule, @schedule_file)
               manager = get_manager_of_week(newSchedule)
-              {:reply, :ok, {newSchedule, users, manager}}
+              {:reply, :ok, {newSchedule, users, idNameMap, nameIdMap, manager}}
 
-      msg -> {:reply, {:error, msg}, {schedule, users, manager}}
+      msg -> {:reply, {:error, msg}, {schedule, users, idNameMap, nameIdMap, manager}}
 
     end
   end
 
-  def handle_call(:remove_users, _from, _state) do
+  def handle_call(:remove_users, _from, {_, _, idNameMap, nameIdMap, _}) do
     save_state([], @users_file)
     save_state([], @schedule_file)
-    {:reply, :ok, {[], [], :no_specified}}
+    {:reply, :ok, {[], [], idNameMap, :no_specified}}
   end
 
-  def handle_call(:remove_schedule, _from, {_, users, _}) do
+  def handle_call(:remove_schedule, _from, {_, users, idNameMap,nameIdMap, _}) do
     save_state([], @schedule_file)
-    {:reply, :ok, {[], users, :no_specified}}
+    {:reply, :ok, {[], users, idNameMap,nameIdMap, :no_specified}}
   end
 
 
@@ -230,7 +238,21 @@ defmodule Brain.DishwasherManager do
 
     manager = get_manager_of_week(schedule)
 
-    {:ok, {schedule, users, manager}}
+    members = Slack.Web.Users.list(%{token: "xoxb-236968418545-LS34wziPDCf07sha2bkzhbe3"})
+    idNameMap = members
+               |> Map.get("members")
+               |> Enum.map(fn(member) ->
+                 {member["id"], member["name"]}
+               end)
+
+    nameIdMap = members
+               |> Map.get("members")
+               |> Enum.map(fn(member) ->
+                {member["name"], member["id"]}
+               end)
+
+
+    {:ok, {schedule, users, Map.new(idNameMap), Map.new(nameIdMap), manager}}
   end
 
   defp buildFullName(fullName, acc \\ "")
@@ -249,11 +271,11 @@ defmodule Brain.DishwasherManager do
     Keyword.put(schedule, user, {fullName, get_next_valid_date(Date.add(lastDate, 7))})
   end
 
-  defp  validate_user_names([], _users), do: true
-  defp  validate_user_names([user| rest], users) do
+  defp  validate_user_ids([], _users), do: true
+  defp  validate_user_ids([user| rest], users) do
     case Keyword.has_key?(users, user) do
-       false -> "Invalid username! The user #{user} is not a registered."
-       _     -> validate_user_names(rest, users)
+       false -> "Invalid user id! The user #{user} is not a registered."
+       _     -> validate_user_ids(rest, users)
     end
   end
 
