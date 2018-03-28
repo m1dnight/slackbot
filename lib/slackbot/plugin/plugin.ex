@@ -1,7 +1,19 @@
 defmodule Slackbot.Plugin do
+  @moduledoc """
+  This module defines the behaviour for a plugin. 
+
+  Each plugin is used in its own GenServer and is supervised. 
+
+  A Plugin can define multiple callbacks:
+
+  - init/1:
+
+
+  """
   require Logger
-  alias Slackbot.Plugin
   use GenServer
+  alias Slackbot.Plugin
+  alias Slackbot.Connection.{Pubsub, Slack}
 
   #########
   # State #
@@ -16,8 +28,14 @@ defmodule Slackbot.Plugin do
   # Each Plugin should implement an on_message function.
   @callback on_message(message :: term, channel :: term, from :: term) :: any
 
+  # Optional callback to execute when a DM is sent to the bot.
+  @callback on_dm(message :: term, from :: term) :: any
+
   # Optional callback to execute when the plugin starts.
   @callback initialize() :: any
+
+  # Optional callback to pre-hook into a message.
+  @callback hook_pre(message :: term) :: any
 
   ###############
   # Using Macro #
@@ -25,8 +43,6 @@ defmodule Slackbot.Plugin do
 
   defmacro __using__(_) do
     quote location: :keep do
-      require Logger
-
       def init(s) do
         {:ok, s}
       end
@@ -34,11 +50,16 @@ defmodule Slackbot.Plugin do
       defoverridable init: 1
 
       def on_message(msg, chan, from) do
-        Logger.debug("#{__MODULE__} << #{inspect(msg)}")
         {:noreply}
       end
 
       defoverridable on_message: 3
+
+      def on_dm(msg, from) do
+        {:noreply}
+      end
+
+      defoverridable on_dm: 2
 
       def hook_pre(msg) do
         {:ok, msg}
@@ -51,15 +72,6 @@ defmodule Slackbot.Plugin do
   ###################
   # GenServer Stuff #
   ###################
-
-  def child_spec(arg) do
-    default = %{
-      id: __MODULE__,
-      start: {__MODULE__, :start_link, arg}
-    }
-
-    Supervisor.child_spec(default, [])
-  end
 
   @doc """
   This function is called when a programmer starts his module:
@@ -75,7 +87,8 @@ defmodule Slackbot.Plugin do
   """
   def init({mod, args}) do
     # We want to receive messages in this process.
-    SlackManager.add_handler(self())
+    Pubsub.subscribe(:messages)
+    Pubsub.subscribe(:dms)
 
     case mod.init(args) do
       {:ok, state} ->
@@ -90,52 +103,45 @@ defmodule Slackbot.Plugin do
   # GenServer callbacks #
   #######################
 
-  def handle_call(m, from, state) do
-    {:reply, :response, state}
-  end
-
-  def handle_cast(m, state) do
+  def handle_info({:dm, m = %{type: "message", msg_type: :dm}}, state) do
+    Logger.debug("#{state.module} : <-- #{inspect(m)}", ansi_color: :blue)
+    {:ok, m} = state.module.hook_pre(m)
+    resp = state.module.on_dm(m.text, m.username)
+    handle_reply(state, m, resp)
     {:noreply, state}
   end
 
-  @doc """
-  A regular message in a channel has the following form.
-  %{
-    channel: "general",
-    source_team: "T04K740FU",
-    team: "T04K740FU",
-    text: "foobar",
-    ts: "1521811286.000369",
-    type: "message",
-    user: "cdetroye"
-  }
-  """
-  def handle_info(%{type: "message"} = m, state) do
-    {:ok, hooked} = state.module.hook_pre(m)
-    resp = state.module.on_message(hooked.text, hooked.channel, hooked.user)
+  def handle_info({:message, m = %{type: "message"}}, state) do
+    Logger.debug("#{state.module} : <-- #{inspect(m)}", ansi_color: :blue)
+    {:ok, m} = state.module.hook_pre(m)
+    resp = state.module.on_message(m.text, m.channelname, m.username)
+    handle_reply(state, m, resp)
+    {:noreply, state}
+  end
 
-    case resp do
+  def handle_info(_m, state) do
+    {:noreply, state}
+  end
+
+  ###########
+  # Helpers #
+  ###########
+
+  defp handle_reply(state, message, response) do
+    case response do
       {:noreply} ->
         :noop
 
-      {:ok, reply} ->
-        SlackManager.send_message("#{reply}", hooked.channel)
+      {:reply, reply} ->
+        Slack.send_message("#{reply}", message.channel)
+        :ok
 
       {:react, emoji} ->
-        SlackManager.react(hooked, emoji)
+        Slack.react(message, emoji)
+        :ok
 
       {:error, _reason} ->
-        Logger.error("Error in plugin #{inspect(state.module)}")
+        Logger.error("#{__MODULE__} : Error in plugin #{inspect(state.module)}")
     end
-
-    {:noreply, state}
   end
-
-  def handle_info(m, state) do
-    {:noreply, state}
-  end
-
-  #######
-  # API #
-  #######
 end

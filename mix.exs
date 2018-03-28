@@ -1,37 +1,29 @@
-defmodule Slackbot.Mixfile do
+defmodule Slackbot.MixProject do
   use Mix.Project
 
   def project do
-    [app: Slackbot,
-     version: "0.0.1",
-     elixir: "~> 1.4",
-     deps: deps()]
+    [
+      app: :slackbot_v2,
+      version: "0.1.0",
+      elixir: "~> 1.6",
+      start_permanent: Mix.env() == :prod,
+      deps: deps()
+    ]
   end
 
-  # Configuration for the OTP application
-  #
-  # Type `mix help compile.app` for more information
+  # Run "mix help compile.app" to learn about applications.
   def application do
-    [applications: [:logger, :httpoison, :slack, :timex],
-     mod: {Slackbot, []}]
+    [
+      extra_applications: [:logger],
+      mod: {Slackbot.Application, []}
+    ]
   end
 
-  # Dependencies can be Hex packages:
-  #
-  #   {:mydep, "~> 0.3.0"}
-  #
-  # Or git/path repositories:
-  #
-  #   {:mydep, git: "https://github.com/elixir-lang/mydep.git", tag: "0.1.0"}
-  #
-  # Type `mix help deps` for more examples and options
+  # Run "mix help deps" to learn about dependencies.
   defp deps do
-    [{:exgenius,      "~> 0.0.2"},
-     {:slack,         "~> 0.12.0"},
-     {:poison,        "~> 3.0"},
-     {:timex,         "~> 3.1.7"},
-     {:feeder_ex,     "~> 1.0"},
-     {:html_entities, "~> 0.3"}
-   ]
+    [
+      {:gproc, "~> 0.6.1"},
+      {:slack, "~> 0.12.0"}
+    ]
   end
 end

@@ -1,8 +1,21 @@
-# Slack Bot
+# Slackbot
 
-A Slack bot written in Elixir. Based upon the IRC bot by Jeff Weiss (OHaiBot).
+**TODO: Add description**
 
+## Installation
 
-## Config
+If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+by adding `slackbot_v2` to your list of dependencies in `mix.exs`:
 
-There are only a few configuration variables to manage. The configuration file is according to your environment (e.g., `prod` or `dev`). Edit the `config/dev.secret.exs` accordingly. Example configurations are provided, so just rename them to .exs instead of .exs.example.
+```elixir
+def deps do
+  [
+    {:slackbot_v2, "~> 0.1.0"}
+  ]
+end
+```
+
+Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
+and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
+be found at [https://hexdocs.pm/slackbot_v2](https://hexdocs.pm/slackbot_v2).
+
