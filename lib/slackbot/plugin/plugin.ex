@@ -1,8 +1,8 @@
 defmodule Slackbot.Plugin do
   @moduledoc """
-  This module defines the behaviour for a plugin. 
+  This module defines the behaviour for a plugin.
 
-  Each plugin is used in its own GenServer and is supervised. 
+  Each plugin is used in its own GenServer and is supervised.
 
   A Plugin can define multiple callbacks:
 
@@ -26,10 +26,10 @@ defmodule Slackbot.Plugin do
   #############
 
   # Each Plugin should implement an on_message function.
-  @callback on_message(message :: term, channel :: term, from :: term) :: any
+  @callback on_message(message :: term, channel :: term, from :: term, message :: term) :: any
 
   # Optional callback to execute when a DM is sent to the bot.
-  @callback on_dm(message :: term, from :: term) :: any
+  @callback on_dm(message :: term, from :: term, message: term) :: any
 
   # Optional callback to execute when the plugin starts.
   @callback initialize() :: any
@@ -106,7 +106,7 @@ defmodule Slackbot.Plugin do
   def handle_info({:dm, m = %{type: "message", msg_type: :dm}}, state) do
     Logger.debug("#{state.module} : <-- #{inspect(m)}", ansi_color: :blue)
     {:ok, m} = state.module.hook_pre(m)
-    resp = state.module.on_dm(m.text, m.username)
+    resp = state.module.on_dm(m.text, m.username, m)
     handle_reply(state, m, resp)
     {:noreply, state}
   end
@@ -114,7 +114,7 @@ defmodule Slackbot.Plugin do
   def handle_info({:message, m = %{type: "message"}}, state) do
     Logger.debug("#{state.module} : <-- #{inspect(m)}", ansi_color: :blue)
     {:ok, m} = state.module.hook_pre(m)
-    resp = state.module.on_message(m.text, m.channelname, m.username)
+    resp = state.module.on_message(m.text, m.channelname, m.username, m)
     handle_reply(state, m, resp)
     {:noreply, state}
   end
