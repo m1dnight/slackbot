@@ -1,8 +1,8 @@
 defmodule Bot.Misc do
   use Plugin
 
-  @owner Application.fetch_env!(:slack, :owner)
-  @github Application.fetch_env!(:slack, :github)
+  @owner System.get_env("OWNER")
+  @github System.get_env("GITHUB")
   def on_message(<<"!owner"::utf8, _rest::bitstring>>, _channel, _from) do
     {:ok, "My owner is #{@owner}"}
   end

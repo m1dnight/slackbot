@@ -6,7 +6,8 @@ defmodule Supervisor.Connection do
   end
 
   def init(_state) do
-    slack_token = Application.fetch_env!(:slack, :token)
+    slack_token = System.get_env("SLACKTOKEN")
+    IO.puts slack_token
 
     children = [
       # The actual Slack connection.
