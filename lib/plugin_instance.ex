@@ -15,7 +15,27 @@ defmodule Slackbot.PluginInstance do
     Slackbot.PubSub.register(:connected)
     Slackbot.PubSub.register(:mention)
 
-    {:ok, %{:module => module, :state => state}}
+    # Check if the plugin has stored state.
+    plugin_state =
+      case Storage.read(module) do
+        {:error, :not_found} ->
+          Storage.store(module, state)
+          state
+
+        {:ok, state} ->
+          state
+      end
+
+    {:ok, %{:module => module, :plugin_state => plugin_state}}
+  end
+
+  def child_spec(arg) do
+    default = %{
+      id: __MODULE__,
+      start: {__MODULE__, :start_link, arg}
+    }
+
+    Supervisor.child_spec(default, [])
   end
 
   #############
@@ -23,57 +43,67 @@ defmodule Slackbot.PluginInstance do
   #############
 
   def handle_cast({:message, m}, state) do
-    state =
-      case state.module.handle_message(m, state) do
-        {:ok, state} ->
-          state
+    plugin_state =
+      case state.module.handle_message(m, state.plugin_state) do
+        {:ok, plugin_state} ->
+          plugin_state
 
-        {:react, message, emoji, state} ->
+        {:react, message, emoji, plugin_state} ->
           ConnectionHandler.react_to(message, emoji)
-          state
+          plugin_state
 
-        {:message, channel, text, state} ->
+        {:message, channel, text, plugin_state} ->
           ConnectionHandler.send_text(channel, text)
-          state
+          plugin_state
       end
 
+    Storage.store(state.module, plugin_state)
+    state = %{state | plugin_state: plugin_state}
     {:noreply, state}
   end
 
   def handle_cast({:mention, m}, state) do
+    plugin_state =
+      case state.module.handle_mention(m, state.plugin_state) do
+        {:ok, plugin_state} ->
+          plugin_state
 
-    state =
-      case state.module.handle_mention(m, state) do
-        {:ok, state} ->
-          state
-
-        {:react, message, emoji, state} ->
+        {:react, message, emoji, plugin_state} ->
           ConnectionHandler.react_to(message, emoji)
-          state
+          plugin_state
 
-        {:message, channel, text, state} ->
+        {:message, channel, text, plugin_state} ->
           ConnectionHandler.send_text(channel, text)
-          state
+          plugin_state
       end
 
+    Storage.store(state.module, plugin_state)
+    state = %{state | plugin_state: plugin_state}
     {:noreply, state}
   end
 
   def handle_cast({:connected, username}, state) do
-    state =
-      case state.module.handle_connected(username, state) do
-        {:ok, state} -> state
-        {:message, _channel, _text, state} -> state
+    plugin_state =
+      case state.module.handle_connected(username, state.plugin_state) do
+        {:ok, plugin_state} ->
+          plugin_state
+
+        {:message, channel, text, plugin_state} ->
+          ConnectionHandler.send_text(channel, text)
+          plugin_state
       end
 
+    Storage.store(state.module, plugin_state)
+    state = %{state | plugin_state: plugin_state}
+
     {:noreply, state}
   end
 
-  def handle_cast(m, state) do
+  def handle_cast(_m, state) do
     {:noreply, state}
   end
 
-  def handle_info(m, state) do
+  def handle_info(_m, state) do
     {:noreply, state}
   end
 end

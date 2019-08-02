@@ -8,15 +8,12 @@ defmodule Slackbot.Plugin.Echo do
 
     case message.text do
       "react" ->
-        IO.puts("Reacting")
         {:react, message, "sunglasses", state}
 
       "echo" ->
-        IO.puts("Echoing")
         {:message, message.channel, "echo", state}
 
       _ ->
-        IO.puts("nothing")
         {:ok, state}
     end
   end

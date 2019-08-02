@@ -25,7 +25,6 @@ defmodule Slackbot.Parser do
   #   user_team: "T04K740FU"
   # }
   def parse_message(%{type: "message", ts: ts, text: text, user: from, channel: channel}, token) do
-    IO.puts(channel)
     username = username_hash_to_readable(from, token)
     text = dehash_string(text, token)
     channel = channel_hash_to_readable(channel, token)
@@ -84,7 +83,6 @@ defmodule Slackbot.Parser do
     else
       channels = Slack.Web.Channels.list(%{token: token})
       groups = Slack.Web.Groups.list(%{token: token})
-      IO.puts("Got channels and groups ")
 
       {hash, readable} =
         Enum.concat(groups["groups"], channels["channels"])
