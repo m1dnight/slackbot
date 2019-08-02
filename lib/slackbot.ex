@@ -10,8 +10,8 @@ defmodule Slackbot do
     children = [
       worker(Storage, [datafile]),
       worker(Registry, [[keys: :duplicate, name: Slackbot.PubSub, partitions: System.schedulers_online()]]),
-      worker(Slackbot.PluginInstance, [Slackbot.Plugin.Echo, nil], id: :echo),
-      worker(Slackbot.PluginInstance, [Slackbot.Plugin.Karma, %{}], id: :karma),
+      # worker(Slackbot.PluginInstance, [Slackbot.Plugin.Echo, nil], id: :echo),
+      # worker(Slackbot.PluginInstance, [Slackbot.Plugin.Karma, %{}], id: :karma),
       worker(Slack.Bot, [Slackbot.ConnectionHandler, [], slack_token, %{:name => Slackbot.ConnectionHandler}], restart: :permanent)
     ]
 
