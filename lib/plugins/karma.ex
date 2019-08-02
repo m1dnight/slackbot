@@ -19,14 +19,14 @@ defmodule Slackbot.Plugin.Karma do
   def handle_message(m = %Slackbot.Message{text: <<"karma?"::utf8>>}, state) do
     karma = Map.get(state, m.from, 0)
 
-    {:message, m.channel, "#{m.from}: #{karma}", state}
+    {:message, m.channel_hash, "#{m.from}: #{karma}", state}
   end
 
   @impl Slackbot.Plugin
   def handle_message(m = %Slackbot.Message{text: <<"karma "::utf8, thing::bitstring>>}, state) do
     karma = Map.get(state, thing, 0)
 
-    {:message, m.channel, "#{thing}: #{karma}", state}
+    {:message, m.channel_hash, "#{thing}: #{karma}", state}
   end
 
   @impl Slackbot.Plugin
@@ -54,6 +54,11 @@ defmodule Slackbot.Plugin.Karma do
 
   @impl Slackbot.Plugin
   def handle_connected(_nickname, state) do
+    {:ok, state}
+  end
+
+  @impl Slackbot.Plugin
+  def handle_dm(_message, state) do
     {:ok, state}
   end
 end

@@ -1,5 +1,5 @@
 defmodule Slackbot.Parser do
-  alias Slackbot.{Message, Reaction}
+  alias Slackbot.{Message, Reaction, DM}
 
   @moduledoc """
   The Parser module is responsible to aprse incoming and outgoing data.
@@ -24,13 +24,28 @@ defmodule Slackbot.Parser do
   #   user: "U04K740G0",
   #   user_team: "T04K740FU"
   # }
-  def parse_message(%{type: "message", ts: ts, text: text, user: from, channel: channel}, token) do
+  def parse_message(%{type: "message", ts: ts, text: text, user: from, channel: channel_hash}, token) do
+    message_type = channel_type(channel_hash, token)
     username = username_hash_to_readable(from, token)
     text = dehash_string(text, token)
-    channel = channel_hash_to_readable(channel, token)
+    channel = channel_hash_to_readable(channel_hash, token)
     timestamp = parse_timestamp(ts)
 
-    %Message{from: username, text: text, channel: channel, timestamp: timestamp, id: ts}
+    case message_type do
+      {:ok, :im} ->
+        {:ok, %DM{from: username, text: text, channel_name: channel, timestamp: timestamp, id: ts, channel_hash: channel_hash}}
+
+      {:ok, :channel} ->
+        {:ok,
+         %Message{from: username, text: text, channel_name: channel, timestamp: timestamp, id: ts, channel_hash: channel_hash}}
+
+      {:ok, :group} ->
+        {:ok,
+         %Message{from: username, text: text, channel_name: channel, timestamp: timestamp, id: ts, channel_hash: channel_hash}}
+
+      {:error, e} ->
+        {:error, e}
+    end
   end
 
   # %{
@@ -43,11 +58,12 @@ defmodule Slackbot.Parser do
   #   user: "U04K740G0"
   # }
   def parse_reaction(%{user: from, type: "reaction_added", reaction: r, event_ts: ts, item: %{channel: hash, ts: mts}}, token) do
+   IO.puts "Parsing Reaction #{inspect hash}"
     from = username_hash_to_readable(from, token)
     channel = channel_hash_to_readable(hash, token)
-    channel_history(channel, token, mts)
-    message = get_message(channel, mts, token) |> parse_message(token)
-    %Reaction{from: from, message: message, emoji: r, id: ts, type: :added, channel: channel}
+    channel_history(hash, token, mts)
+    message = get_message(hash, mts, token) |> parse_message(token)
+    %Reaction{from: from, message: message, emoji: r, id: ts, type: :added, channel_name: channel}
   end
 
   def parse_timestamp(ts) do
@@ -71,16 +87,17 @@ defmodule Slackbot.Parser do
   ##############################################################################
   ## Messages
 
-  def get_message(channel_name, id, token) do
-    case channel_history(channel_name, token, id) do
+  def get_message(channel_hash, id, token) do
+    case channel_history(channel_hash, token, id) do
       [m] -> m
       _ -> nil
     end
   end
 
-  def channel_history(channel_name, token, oldest \\ 0) do
-    channel_hash = channel_readable_to_hash(channel_name, token)
-    data = Slack.Web.Channels.history(channel_hash, %{token: token, count: 1, oldest: oldest, inclusive: true})
+  def channel_history(channel_hash, token, oldest \\ 0) do
+    data = Slack.Web.Conversations.history(channel_hash, %{token: token, count: 1, oldest: oldest, inclusive: true})
+
+    IO.inspect data
 
     data
     |> Map.get("messages")
@@ -94,6 +111,24 @@ defmodule Slackbot.Parser do
 
   ##############################################################################
   ## Channels
+
+  def channel_type(channel_hash, token) do
+    info = Slack.Web.Conversations.info(channel_hash, %{token: token})
+
+    case info do
+      %{"error" => e} ->
+        {:error, e}
+
+      %{"channel" => %{"is_channel" => true}} ->
+        {:ok, :channel}
+
+      %{"channel" => %{"is_im" => true}} ->
+        {:ok, :im}
+
+      %{"channel" => %{"is_group" => true}} ->
+        {:ok, :group}
+    end
+  end
 
   defp channel_hash_to_readable(hash, token) do
     name =

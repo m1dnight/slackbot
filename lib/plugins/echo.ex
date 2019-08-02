@@ -16,7 +16,7 @@ defmodule Slackbot.Plugin.Echo do
         {:react, message, "sunglasses", state}
 
       "echo" ->
-        {:message, message.channel, "echo", state}
+        {:message, message.channel_hash, "echo", state}
 
       _ ->
         {:ok, state}
@@ -26,12 +26,26 @@ defmodule Slackbot.Plugin.Echo do
   @impl Slackbot.Plugin
   def handle_mention(message, state) do
     Logger.debug("Echo: Mention: #{inspect(message)}")
-    {:message, message.channel, message.text, state}
+    {:message, message.channel_hash, message.text, state}
   end
 
   @impl Slackbot.Plugin
   def handle_connected(nickname, state) do
     Logger.debug("Echo: Connected: #{inspect(nickname)}")
     {:ok, state}
+  end
+
+  @impl Slackbot.Plugin
+  def handle_dm(message, state) do
+    case message.text do
+      "react" ->
+        {:react, message, "sunglasses", state}
+
+      "echo" ->
+        {:message, message.channel_hash, "echo", state}
+
+      _ ->
+        {:ok, state}
+    end
   end
 end

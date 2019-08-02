@@ -15,6 +15,7 @@ defmodule Slackbot.PluginInstance do
     Slackbot.PubSub.register(:connected)
     Slackbot.PubSub.register(:mention)
     Slackbot.PubSub.register(:reaction)
+    Slackbot.PubSub.register(:dm)
 
     # Check if the plugin has stored state.
     plugin_state =
@@ -42,6 +43,26 @@ defmodule Slackbot.PluginInstance do
   #############
   # Callbacks #
   #############
+
+  def handle_cast({:dm, m}, state) do
+    plugin_state =
+      case state.module.handle_dm(m, state.plugin_state) do
+        {:ok, plugin_state} ->
+          plugin_state
+
+        {:message, channel, text, plugin_state} ->
+          ConnectionHandler.send_text(channel, text)
+          plugin_state
+
+        {:react, message, emoji, plugin_state} ->
+          ConnectionHandler.react_to(message, emoji)
+          plugin_state
+      end
+
+    Storage.store(state.module, plugin_state)
+    state = %{state | plugin_state: plugin_state}
+    {:noreply, state}
+  end
 
   def handle_cast({:reaction, r}, state) do
     plugin_state =
