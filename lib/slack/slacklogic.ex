@@ -44,7 +44,16 @@ defmodule Slackbot.ConnectionHandler do
     {:ok, state}
   end
 
-  def handle_event(_, _, state), do: {:ok, state}
+  def handle_event(event = %{type: "reaction_added"}, slack, state) do
+    reaction = Parser.parse_reaction(event, slack.token)
+    PubSub.cast_all(:reaction, reaction)
+    {:ok, state}
+  end
+
+  def handle_event(event, _, state) do
+    Logger.debug(inspect(event))
+    {:ok, state}
+  end
 
   def handle_info({:message, channel, text}, slack, state) do
     send_message(text, channel, slack)

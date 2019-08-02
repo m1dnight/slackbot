@@ -1,5 +1,5 @@
 defmodule Slackbot.Parser do
-  alias Slackbot.Message
+  alias Slackbot.{Message, Reaction}
 
   @moduledoc """
   The Parser module is responsible to aprse incoming and outgoing data.
@@ -33,6 +33,23 @@ defmodule Slackbot.Parser do
     %Message{from: username, text: text, channel: channel, timestamp: timestamp, id: ts}
   end
 
+  # %{
+  #   event_ts: "1564736187.035100",
+  #   item: %{channel: "C04K740NY", ts: "1564736059.034300", type: "message"},
+  #   item_user: "U3NTQ62JF",
+  #   reaction: "rocket",
+  #   ts: "1564736187.035100",
+  #   type: "reaction_added",
+  #   user: "U04K740G0"
+  # }
+  def parse_reaction(%{user: from, type: "reaction_added", reaction: r, event_ts: ts, item: %{channel: hash, ts: mts}}, token) do
+    from = username_hash_to_readable(from, token)
+    channel = channel_hash_to_readable(hash, token)
+    channel_history(channel, token, mts)
+    message = get_message(channel, mts, token) |> parse_message(token)
+    %Reaction{from: from, message: message, emoji: r, id: ts, type: :added, channel: channel}
+  end
+
   def parse_timestamp(ts) do
     ts
     |> String.split(".")
@@ -48,6 +65,30 @@ defmodule Slackbot.Parser do
     ~r/\<@([a-zA-Z0-9]+)\>/
     |> Regex.replace(str, fn _, x ->
       username_hash_to_readable("#{x}", token)
+    end)
+  end
+
+  ##############################################################################
+  ## Messages
+
+  def get_message(channel_name, id, token) do
+    case channel_history(channel_name, token, id) do
+      [m] -> m
+      _ -> nil
+    end
+  end
+
+  def channel_history(channel_name, token, oldest \\ 0) do
+    channel_hash = channel_readable_to_hash(channel_name, token)
+    data = Slack.Web.Channels.history(channel_hash, %{token: token, count: 1, oldest: oldest, inclusive: true})
+
+    data
+    |> Map.get("messages")
+    |> Enum.map(fn m ->
+      Map.put(m, "channel", channel_hash)
+    end)
+    |> Enum.map(fn m ->
+      Map.new(m, fn {k, v} -> {String.to_atom(k), v} end)
     end)
   end
 

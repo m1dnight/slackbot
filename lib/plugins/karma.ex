@@ -2,6 +2,18 @@ defmodule Slackbot.Plugin.Karma do
   @behaviour Slackbot.Plugin
   require Logger
 
+  @impl Slackbot.Plugin
+  def handle_reaction(reaction, state) do
+    # If a message gets a red card, we decrease karma by one.
+    state =
+      case reaction.emoji do
+        "-1" -> Map.update(state, reaction.message.from, 1, fn k -> k - 1 end)
+        "+1" -> Map.update(state, reaction.message.from, 1, fn k -> k + 1 end)
+        _ -> state
+      end
+
+    {:ok, state}
+  end
 
   @impl Slackbot.Plugin
   def handle_message(m = %Slackbot.Message{text: <<"karma?"::utf8>>}, state) do

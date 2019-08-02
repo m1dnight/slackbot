@@ -3,6 +3,11 @@ defmodule Slackbot.Plugin.Echo do
   require Logger
 
   @impl Slackbot.Plugin
+  def handle_reaction(_reaction, state) do
+    {:ok, state}
+  end
+
+  @impl Slackbot.Plugin
   def handle_message(message, state) do
     Logger.debug("Echo: Message: #{inspect(message)}")
 
