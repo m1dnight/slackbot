@@ -22,6 +22,7 @@ defmodule Slackbot.PluginInstance do
       case Storage.read(module) do
         {:error, :not_found} ->
           Storage.store(module, state)
+          IO.inspect(state)
           state
 
         {:ok, state} ->

@@ -58,7 +58,7 @@ defmodule Slackbot.Parser do
   #   user: "U04K740G0"
   # }
   def parse_reaction(%{user: from, type: "reaction_added", reaction: r, event_ts: ts, item: %{channel: hash, ts: mts}}, token) do
-   IO.puts "Parsing Reaction #{inspect hash}"
+    IO.puts("Parsing Reaction #{inspect(hash)}")
     from = username_hash_to_readable(from, token)
     channel = channel_hash_to_readable(hash, token)
     channel_history(hash, token, mts)
@@ -97,7 +97,7 @@ defmodule Slackbot.Parser do
   def channel_history(channel_hash, token, oldest \\ 0) do
     data = Slack.Web.Conversations.history(channel_hash, %{token: token, count: 1, oldest: oldest, inclusive: true})
 
-    IO.inspect data
+    IO.inspect(data)
 
     data
     |> Map.get("messages")
