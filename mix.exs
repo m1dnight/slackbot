@@ -21,8 +21,7 @@ defmodule Slackbot.MixProject do
 
   defp deps do
     [
-      # {:slack, "~> 0.19.0"},
-      {:slack, git: "https://github.com/m1dnight/Elixir-Slack", branch: "master"},
+      {:slack, "~> 0.22.0"},
       {:timex, ">= 0.0.0"},
       {:dialyxir, "~> 0.5", only: [:dev], runtime: false}
     ]
